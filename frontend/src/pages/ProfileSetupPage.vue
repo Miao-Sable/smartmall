@@ -11,6 +11,7 @@ const router = useRouter()
 const isOnboarding = route.query.from === 'login'
 const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
 
+// 昵称已移到「我的」页修改，这里仅用于保存时回传，避免被清空
 const nickname = ref('')
 const allergenIds = ref<number[]>([])
 const dietIds = ref<number[]>([])
@@ -73,10 +74,6 @@ async function onSave() {
     <van-nav-bar title="档案设置" left-arrow @click-left="$router.back()" />
     <van-loading v-if="loading" class="center" size="24" />
     <template v-else>
-      <van-cell-group inset title="基本信息">
-        <van-field v-model="nickname" label="昵称" placeholder="给自己起个昵称" />
-      </van-cell-group>
-
       <van-cell-group inset title="过敏源（选择后扫码将自动提醒）">
         <van-checkbox-group v-model="allergenIds">
           <van-cell

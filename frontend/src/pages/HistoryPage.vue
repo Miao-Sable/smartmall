@@ -19,7 +19,7 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <van-nav-bar title="扫描历史" />
+    <van-nav-bar title="扫描历史" fixed placeholder left-arrow @click-left="$router.back()" />
     <van-loading v-if="loading" class="center" size="24" />
     <van-empty v-else-if="!list.length" description="还没有扫描记录，去扫一扫吧">
       <van-button round type="primary" to="/scan">去扫码</van-button>

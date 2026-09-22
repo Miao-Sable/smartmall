@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { Html5Qrcode } from 'html5-qrcode'
@@ -13,6 +13,9 @@ let scanner: Html5Qrcode | null = null
 let submitting = false
 
 async function startScan() {
+  // 先显示摄像头容器并等 DOM 更新，否则库初始化时找不到 #qr-reader
+  scanning.value = true
+  await nextTick()
   scanner = new Html5Qrcode('qr-reader')
   try {
     await scanner.start(
@@ -23,9 +26,9 @@ async function startScan() {
         // 逐帧识别失败的回调，静默处理
       },
     )
-    scanning.value = true
   } catch {
     scanner = null
+    scanning.value = false
     showToast('无法打开摄像头，请检查权限或使用手动输入')
   }
 }
@@ -83,33 +86,48 @@ onBeforeUnmount(() => {
 <template>
   <div class="page">
     <van-nav-bar title="扫码" />
-    <div class="scan-area">
-      <div id="qr-reader" class="qr-reader" />
-      <van-empty v-if="!scanning" description="点击下方按钮开启摄像头扫码" />
-    </div>
-    <div class="manual-area">
-      <van-field v-model="barcode" type="digit" placeholder="或手动输入商品条形码" clearable>
-        <template #button>
-          <van-button size="small" type="primary" @click="onManualSearch">查询</van-button>
-        </template>
-      </van-field>
-    </div>
-    <div class="scan-actions">
-      <van-button type="primary" block round @click="onToggleScan">
-        {{ scanning ? '关闭摄像头' : '开启摄像头扫码' }}
-      </van-button>
-      <p class="tip">示例条码：6901234567890（花生夹心燕麦饼干）</p>
+    <div class="scan-body">
+      <div v-if="scanning" class="scan-area">
+        <div id="qr-reader" class="qr-reader" />
+      </div>
+      <van-empty v-else class="scan-empty" description="点击下方按钮开启摄像头扫码" />
+      <div class="manual-area">
+        <van-field v-model="barcode" type="digit" placeholder="或手动输入商品条形码" clearable>
+          <template #button>
+            <van-button size="small" type="primary" @click="onManualSearch">查询</van-button>
+          </template>
+        </van-field>
+      </div>
+      <div class="scan-actions">
+        <van-button type="primary" block round @click="onToggleScan">
+          {{ scanning ? '关闭摄像头' : '开启摄像头扫码' }}
+        </van-button>
+        <p class="tip">示例条码：6901234567890（花生夹心燕麦饼干）</p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.page {
+  min-height: calc(100vh - var(--van-tabbar-height, 50px));
+  display: flex;
+  flex-direction: column;
+}
+.scan-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .scan-area {
   margin: 12px;
 }
 .qr-reader {
   min-height: 240px;
   width: 100%;
+}
+.scan-empty {
+  flex: 1;
 }
 .manual-area {
   margin: 12px;
