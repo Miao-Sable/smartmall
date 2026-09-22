@@ -13,11 +13,11 @@ let scanner: Html5Qrcode | null = null
 let submitting = false
 
 async function startScan() {
-  // 先显示摄像头容器并等 DOM 更新，否则库初始化时找不到 #qr-reader
+  // 先切到扫描态并等容器可见；#qr-reader 用 v-show 常驻 DOM，构造函数才不会报「元素不存在」
   scanning.value = true
   await nextTick()
-  scanner = new Html5Qrcode('qr-reader')
   try {
+    scanner = new Html5Qrcode('qr-reader')
     await scanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 220, height: 220 } },
@@ -87,10 +87,10 @@ onBeforeUnmount(() => {
   <div class="page">
     <van-nav-bar title="扫码" />
     <div class="scan-body">
-      <div v-if="scanning" class="scan-area">
+      <div v-show="scanning" class="scan-area">
         <div id="qr-reader" class="qr-reader" />
       </div>
-      <van-empty v-else class="scan-empty" description="点击下方按钮开启摄像头扫码" />
+      <van-empty v-if="!scanning" class="scan-empty" description="点击下方按钮开启摄像头扫码" />
       <div class="manual-area">
         <van-field v-model="barcode" type="digit" placeholder="或手动输入商品条形码" clearable>
           <template #button>
