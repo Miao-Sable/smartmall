@@ -1,5 +1,3 @@
-以下内容可直接复制保存为 GitHub 仓库的 `README.md`。
-
 ````markdown
 # 智慧购物 H5
 
