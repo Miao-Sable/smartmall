@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { getScanHistoryApi, type ScanRecord } from '@/api/scan'
-import { formatTime } from '@/utils'
+import { formatTime, trafficColor } from '@/utils'
 
 const list = ref<ScanRecord[]>([])
 const loading = ref(true)
@@ -34,7 +34,9 @@ onMounted(async () => {
         :to="{ path: `/product/${item.barcode}`, query: { scan_id: item.id } }"
       >
         <template #value>
-          <span class="history-score">{{ item.score }} 分</span>
+          <span class="history-score" :style="{ color: trafficColor(item.analysis?.traffic_light) }">
+            {{ item.score }} 分
+          </span>
           <van-tag :type="item.has_allergen ? 'danger' : 'success'" plain>
             {{ item.has_allergen ? '含过敏源' : '安全' }}
           </van-tag>

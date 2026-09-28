@@ -51,5 +51,203 @@
       { "name": "脂肪", "value": "42.0", "unit": "g" },
       { "name": "碳水化合物", "value": "30.0", "unit": "g" }
     ]
+  },
+  {
+    "id": 4,
+    "barcode": "6901234567893",
+    "name": "全麦面包",
+    "brand": "麦田烘焙",
+    "category": "烘焙主食",
+    "image_url": "",
+    "description": "全麦粉制作，无蔗糖添加，麦香浓郁。",
+    "tags": [],
+    "ingredients": ["全麦粉", "小麦粉", "水", "酵母", "食用盐", "白砂糖"],
+    "nutrition": [
+      { "name": "能量", "value": "1120", "unit": "kJ" },
+      { "name": "蛋白质", "value": "9.5", "unit": "g" },
+      { "name": "脂肪", "value": "3.2", "unit": "g" },
+      { "name": "碳水化合物", "value": "62.0", "unit": "g" },
+      { "name": "钠", "value": "320", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 5,
+    "barcode": "6901234567894",
+    "name": "无糖酸奶",
+    "brand": "牧原乳业",
+    "category": "乳制品",
+    "image_url": "",
+    "description": "0 蔗糖添加，生牛乳发酵，口感清爽。",
+    "tags": ["低糖"],
+    "ingredients": ["生牛乳", "脱脂乳粉", "乳酸菌"],
+    "nutrition": [
+      { "name": "能量", "value": "240", "unit": "kJ" },
+      { "name": "蛋白质", "value": "3.5", "unit": "g" },
+      { "name": "脂肪", "value": "0.4", "unit": "g" },
+      { "name": "碳水化合物", "value": "5.2", "unit": "g" },
+      { "name": "钠", "value": "60", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 6,
+    "barcode": "6901234567895",
+    "name": "酿造酱油",
+    "brand": "海味坊",
+    "category": "调味品",
+    "image_url": "",
+    "description": "传统酿造酱油，非转基因大豆。",
+    "tags": [],
+    "ingredients": ["水", "大豆", "小麦", "食用盐", "焦糖色"],
+    "nutrition": [
+      { "name": "能量", "value": "320", "unit": "kJ" },
+      { "name": "蛋白质", "value": "8.0", "unit": "g" },
+      { "name": "脂肪", "value": "0.1", "unit": "g" },
+      { "name": "碳水化合物", "value": "15.0", "unit": "g" },
+      { "name": "钠", "value": "6500", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 7,
+    "barcode": "6901234567896",
+    "name": "每日混合坚果",
+    "brand": "果每日",
+    "category": "坚果",
+    "image_url": "",
+    "description": "花生、腰果、杏仁混合装，原味烘焙。",
+    "tags": [],
+    "ingredients": ["花生仁", "腰果仁", "杏仁", "食用盐"],
+    "nutrition": [
+      { "name": "能量", "value": "2600", "unit": "kJ" },
+      { "name": "蛋白质", "value": "20.0", "unit": "g" },
+      { "name": "脂肪", "value": "55.0", "unit": "g" },
+      { "name": "碳水化合物", "value": "20.0", "unit": "g" },
+      { "name": "钠", "value": "250", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 8,
+    "barcode": "6901234567897",
+    "name": "无糖苏打水",
+    "brand": "清泉饮品",
+    "category": "饮料",
+    "image_url": "",
+    "description": "0 糖 0 脂 0 卡，柠檬味气泡水。",
+    "tags": ["低糖"],
+    "ingredients": ["水", "二氧化碳", "柠檬酸", "碳酸氢钠"],
+    "nutrition": [
+      { "name": "能量", "value": "0", "unit": "kJ" },
+      { "name": "蛋白质", "value": "0", "unit": "g" },
+      { "name": "脂肪", "value": "0", "unit": "g" },
+      { "name": "碳水化合物", "value": "0", "unit": "g" },
+      { "name": "钠", "value": "80", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 9,
+    "barcode": "6901234567898",
+    "name": "番茄味薯片",
+    "brand": "脆脆乐",
+    "category": "零食",
+    "image_url": "",
+    "description": "经典番茄口味，香脆可口。",
+    "tags": [],
+    "ingredients": ["马铃薯", "植物油", "白砂糖", "番茄粉", "食用盐", "味精"],
+    "nutrition": [
+      { "name": "能量", "value": "2200", "unit": "kJ" },
+      { "name": "蛋白质", "value": "6.0", "unit": "g" },
+      { "name": "脂肪", "value": "32.0", "unit": "g" },
+      { "name": "碳水化合物", "value": "62.0", "unit": "g" },
+      { "name": "钠", "value": "680", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 10,
+    "barcode": "6901234567899",
+    "name": "鸡蛋挂面",
+    "brand": "麦香面业",
+    "category": "方便食品",
+    "image_url": "",
+    "description": "小麦粉加鸡蛋制成，口感劲道。",
+    "tags": [],
+    "ingredients": ["小麦粉", "鸡蛋", "水", "食用盐"],
+    "nutrition": [
+      { "name": "能量", "value": "1500", "unit": "kJ" },
+      { "name": "蛋白质", "value": "11.0", "unit": "g" },
+      { "name": "脂肪", "value": "1.5", "unit": "g" },
+      { "name": "碳水化合物", "value": "65.0", "unit": "g" },
+      { "name": "钠", "value": "500", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 11,
+    "barcode": "6901234567900",
+    "name": "虾味条",
+    "brand": "海滋味",
+    "category": "零食",
+    "image_url": "",
+    "description": "虾味膨化零食，鲜香酥脆。",
+    "tags": [],
+    "ingredients": ["虾", "小麦粉", "淀粉", "食用盐", "白砂糖"],
+    "nutrition": [
+      { "name": "能量", "value": "1900", "unit": "kJ" },
+      { "name": "蛋白质", "value": "5.0", "unit": "g" },
+      { "name": "脂肪", "value": "12.0", "unit": "g" },
+      { "name": "碳水化合物", "value": "70.0", "unit": "g" },
+      { "name": "钠", "value": "780", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 12,
+    "barcode": "6901234567901",
+    "name": "纯豆浆",
+    "brand": "豆之源",
+    "category": "饮料",
+    "image_url": "",
+    "description": "非转基因大豆，无糖无添加。",
+    "tags": ["素食"],
+    "ingredients": ["水", "大豆"],
+    "nutrition": [
+      { "name": "能量", "value": "180", "unit": "kJ" },
+      { "name": "蛋白质", "value": "3.0", "unit": "g" },
+      { "name": "脂肪", "value": "1.8", "unit": "g" },
+      { "name": "碳水化合物", "value": "4.0", "unit": "g" },
+      { "name": "钠", "value": "30", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 13,
+    "barcode": "6901234567902",
+    "name": "牛奶巧克力",
+    "brand": "可可工坊",
+    "category": "零食",
+    "image_url": "",
+    "description": "丝滑牛奶巧克力，含乳粉。",
+    "tags": [],
+    "ingredients": ["白砂糖", "可可液块", "可可脂", "全脂乳粉", "大豆卵磷脂"],
+    "nutrition": [
+      { "name": "能量", "value": "2300", "unit": "kJ" },
+      { "name": "蛋白质", "value": "7.0", "unit": "g" },
+      { "name": "脂肪", "value": "30.0", "unit": "g" },
+      { "name": "碳水化合物", "value": "62.0", "unit": "g" },
+      { "name": "钠", "value": "80", "unit": "mg" }
+    ]
+  },
+  {
+    "id": 14,
+    "barcode": "6901234567903",
+    "name": "花生燕麦能量棒",
+    "brand": "活力补给",
+    "category": "零食",
+    "image_url": "",
+    "description": "燕麦与花生混合能量棒，运动加餐。",
+    "tags": [],
+    "ingredients": ["燕麦片", "花生", "蜂蜜", "葡萄干", "白砂糖"],
+    "nutrition": [
+      { "name": "能量", "value": "1800", "unit": "kJ" },
+      { "name": "蛋白质", "value": "9.0", "unit": "g" },
+      { "name": "脂肪", "value": "15.0", "unit": "g" },
+      { "name": "碳水化合物", "value": "68.0", "unit": "g" },
+      { "name": "钠", "value": "120", "unit": "mg" }
+    ]
   }
 ]

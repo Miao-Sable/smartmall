@@ -30,6 +30,8 @@ class AnalysisResult(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     scan_id: int = Field(foreign_key="scan_history.id", unique=True)
     allergen_hits: list = Field(default_factory=list, sa_column=Column(JSON))  # [{allergen_name, ingredient}]
+    reasons: list = Field(default_factory=list, sa_column=Column(JSON))  # [{type, label, delta}]
     score: int = 0
     level: str = ""
+    traffic_light: str = "green"  # green / yellow / red
     recommended: bool = True

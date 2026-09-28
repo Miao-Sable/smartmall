@@ -10,6 +10,23 @@ export function scoreLevel(score: number) {
   return SCORE_LEVELS.find((l) => score >= l.min) ?? SCORE_LEVELS[SCORE_LEVELS.length - 1]
 }
 
+/** 红黄绿交通灯颜色（与后端 matching.LIGHT_LABELS 一致） */
+export const TRAFFIC_COLORS: Record<string, string> = {
+  green: '#07c160',
+  yellow: '#ff976a',
+  red: '#ee0a24',
+}
+
+export const TRAFFIC_LABELS: Record<string, string> = {
+  green: '适合',
+  yellow: '谨慎',
+  red: '不建议',
+}
+
+export function trafficColor(light?: string) {
+  return TRAFFIC_COLORS[light ?? ''] ?? TRAFFIC_COLORS.green
+}
+
 export function formatTime(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', { hour12: false })
 }

@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPriceHistoryApi, getProductApi, type PricePoint, type Product } from '@/api/product'
 import { getScanApi, type ScanRecord } from '@/api/scan'
-import { scoreLevel } from '@/utils'
+import { scoreLevel, trafficColor } from '@/utils'
 import PriceTrendChart from '@/components/PriceTrendChart.vue'
 
 const route = useRoute()
@@ -62,13 +62,30 @@ function isHit(ingredient: string) {
       <van-cell-group inset title="分析结果">
         <van-cell v-if="scan?.analysis">
           <template #title>
-            <span class="score" :style="{ color: scoreLevel(scan.analysis.score).color }">
-              {{ scan.analysis.score }} 分 · {{ scan.analysis.level }}
-            </span>
+            <div class="result-head">
+              <span class="traffic-dot" :style="{ background: trafficColor(scan.analysis.traffic_light) }" />
+              <span class="traffic-label" :style="{ color: trafficColor(scan.analysis.traffic_light) }">
+                {{ scan.analysis.traffic_label }}
+              </span>
+              <span class="score" :style="{ color: scoreLevel(scan.analysis.score).color }">
+                {{ scan.analysis.score }} 分 · {{ scan.analysis.level }}
+              </span>
+            </div>
           </template>
         </van-cell>
         <van-cell v-else title="暂无分析结果">
           <template #label>扫码后即可看到匹配度评分与过敏提醒</template>
+        </van-cell>
+      </van-cell-group>
+
+      <!-- 评分明细（可解释加减分） -->
+      <van-cell-group v-if="scan?.analysis?.reasons.length" inset title="评分明细">
+        <van-cell v-for="(r, i) in scan.analysis.reasons" :key="i" :title="r.label">
+          <template #value>
+            <span class="delta" :class="r.delta >= 0 ? 'delta-plus' : 'delta-minus'">
+              {{ r.delta >= 0 ? '+' : '' }}{{ r.delta }}
+            </span>
+          </template>
         </van-cell>
       </van-cell-group>
 
@@ -146,6 +163,31 @@ function isHit(ingredient: string) {
 .score {
   font-size: 16px;
   font-weight: 600;
+}
+.result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.traffic-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.traffic-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+.delta {
+  font-weight: 600;
+  font-size: 15px;
+}
+.delta-plus {
+  color: #07c160;
+}
+.delta-minus {
+  color: #ee0a24;
 }
 .ingredients {
   display: flex;

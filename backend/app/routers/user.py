@@ -31,8 +31,10 @@ def _recompute_scan_analysis(session: Session, user_id: int) -> None:
             result = AnalysisResult(scan_id=scan.id)
             session.add(result)
         result.allergen_hits = analysis["allergen_hits"]
+        result.reasons = analysis["reasons"]
         result.score = analysis["score"]
         result.level = analysis["level"]
+        result.traffic_light = analysis["traffic_light"]
         result.recommended = analysis["recommended"]
 
 

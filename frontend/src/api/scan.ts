@@ -5,10 +5,19 @@ export interface AllergenHit {
   ingredient: string
 }
 
+export interface ScoreReason {
+  type: 'allergen' | 'diet' | 'nutrition' | 'price'
+  label: string
+  delta: number
+}
+
 export interface Analysis {
   score: number
   level: string
+  traffic_light: 'green' | 'yellow' | 'red'
+  traffic_label: string
   allergen_hits: AllergenHit[]
+  reasons: ScoreReason[]
   recommended: boolean
 }
 

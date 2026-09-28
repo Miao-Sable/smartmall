@@ -9,7 +9,7 @@ from app.deps import get_current_user
 from app.models.scan import AnalysisResult, ScanHistory
 from app.models.user import User
 from app.schemas.scan import AnalysisOut, ScanCreate, ScanOut
-from app.services.matching import analyze_product, load_user_allergens, load_user_diets
+from app.services.matching import analyze_product, light_label, load_user_allergens, load_user_diets
 from app.services.mock_data import find_product_by_barcode
 
 router = APIRouter()
@@ -21,7 +21,10 @@ def _to_scan_out(scan: ScanHistory, result: Optional[AnalysisResult]) -> ScanOut
         analysis = AnalysisOut(
             score=result.score,
             level=result.level,
-            allergen_hits=result.allergen_hits,
+            traffic_light=result.traffic_light or "green",
+            traffic_label=light_label(result.traffic_light or "green"),
+            allergen_hits=result.allergen_hits or [],
+            reasons=result.reasons or [],
             recommended=result.recommended,
         )
     return ScanOut(
@@ -71,8 +74,10 @@ def create_scan(
     result = AnalysisResult(
         scan_id=scan.id,
         allergen_hits=analysis["allergen_hits"],
+        reasons=analysis["reasons"],
         score=analysis["score"],
         level=analysis["level"],
+        traffic_light=analysis["traffic_light"],
         recommended=analysis["recommended"],
     )
     session.add(result)

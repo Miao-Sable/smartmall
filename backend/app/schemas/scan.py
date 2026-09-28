@@ -14,10 +14,19 @@ class AllergenHit(BaseModel):
     ingredient: str
 
 
+class ScoreReason(BaseModel):
+    type: str  # allergen / diet / nutrition / price
+    label: str
+    delta: int
+
+
 class AnalysisOut(BaseModel):
     score: int
     level: str
+    traffic_light: str = "green"  # green / yellow / red
+    traffic_label: str = "适合"  # 适合 / 谨慎 / 不建议
     allergen_hits: list[AllergenHit] = []
+    reasons: list[ScoreReason] = []
     recommended: bool
 
 
