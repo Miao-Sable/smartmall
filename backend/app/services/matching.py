@@ -48,6 +48,11 @@ def match_allergens(ingredients: list[str], user_allergens: list[dict]) -> list[
     return hits
 
 
+def match_diets(ingredients: list[str], tags: list[str], user_diets: list[dict]) -> list[str]:
+    """返回被违反的饮食偏好名称列表（仅名称，用于软提示）。"""
+    return [d["name"] for d in user_diets if violates_diet(ingredients, tags, d)]
+
+
 def violates_diet(ingredients: list[str], tags: list[str], diet: dict) -> bool:
     """简单关键词判断：商品标签明确符合偏好（如“低糖”）视为不违规"""
     if diet["name"] in tags:

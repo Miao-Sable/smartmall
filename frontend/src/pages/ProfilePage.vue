@@ -56,6 +56,7 @@ function onLogout() {
       <van-cell-group inset title="功能">
         <van-cell title="过敏源与饮食偏好" is-link to="/profile/setup" />
         <van-cell title="扫描历史" is-link to="/history" />
+        <van-cell title="购物清单预检" is-link to="/shopping-list" />
       </van-cell-group>
       <van-cell-group inset title="关于">
         <van-cell title="隐私与免责声明" is-link to="/privacy" />

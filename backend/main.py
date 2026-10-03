@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.database import init_db
-from app.routers import auth, meta, products, scan, stats, user
+from app.routers import auth, meta, products, scan, shopping_list, stats, user
 
 
 @asynccontextmanager
@@ -36,6 +36,7 @@ app.include_router(meta.router, prefix="/api/meta", tags=["字典"])
 app.include_router(products.router, prefix="/api/products", tags=["商品"])
 app.include_router(scan.router, prefix="/api/scan", tags=["扫码"])
 app.include_router(stats.router, prefix="/api/stats", tags=["统计"])
+app.include_router(shopping_list.router, prefix="/api/shopping-list", tags=["购物清单"])
 
 
 @app.get("/")
