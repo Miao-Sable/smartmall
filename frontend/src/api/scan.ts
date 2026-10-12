@@ -31,6 +31,8 @@ export interface ScanRecord {
   has_allergen: boolean
   source: string
   created_at: string
+  profile_id: number | null
+  profile_name: string
   analysis: Analysis | null
 }
 
