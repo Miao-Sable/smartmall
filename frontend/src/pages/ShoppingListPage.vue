@@ -2,6 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { showToast } from 'vant'
 import { precheckApi, rematchApi, type PrecheckItem, type ProductBrief } from '@/api/shopping-list'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const SAVE_HISTORY_KEY = 'shopping-list-scheme-history'
 const MAX_HISTORY = 50
@@ -10,6 +13,7 @@ const MAX_HISTORY = 50
 const rawText = ref('')
 const pasting = ref(false)
 const importing = ref(false)
+const showProfileSwitch = ref(false)
 
 // —— 导入结果 toast ——
 const showResult = ref(false)
@@ -77,6 +81,8 @@ const detailScheme = ref<SavedScheme | null>(null)
 const showMore = ref(false)
 
 onMounted(() => {
+  // 直接刷新进入本页时，确保档案已加载（activeProfile 才有效）
+  void userStore.fetchProfiles()
   try {
     const raw = localStorage.getItem(SAVE_HISTORY_KEY)
     if (raw) {
@@ -108,6 +114,22 @@ function splitItems(text: string): string[] {
     .filter(Boolean)
 }
 
+// —— 给谁买（家庭档案切换） ——
+const profileActions = computed(() =>
+  userStore.profiles.map((p) => ({
+    name: `${p.emoji || '👤'} ${p.name}${p.is_default ? '（默认）' : ''}`,
+    id: p.id,
+  })),
+)
+
+function onSelectProfile(action: { name: string; id: number }) {
+  const p = userStore.profiles.find((x) => x.id === action.id)
+  if (p) userStore.setActiveProfile(p.id)
+  showProfileSwitch.value = false
+  // 已有输入时按新档案重新预检
+  if (rawText.value.trim()) void onImport()
+}
+
 // —— 粘贴 / 导入 ——
 async function onPaste() {
   pasting.value = true
@@ -134,7 +156,7 @@ async function onImport() {
   }
   importing.value = true
   try {
-    const res = await precheckApi(items)
+    const res = await precheckApi(items, userStore.activeProfile?.id)
     resultItems.value = res.items
     showResult.value = true
   } catch {
@@ -173,7 +195,7 @@ async function pickCandidate(candidate: ProductBrief) {
   const target = rematchTarget.value
   if (!target) return
   try {
-    const res = await precheckApi([candidate.name])
+    const res = await precheckApi([candidate.name], userStore.activeProfile?.id)
     const item = res.items[0]
     const idx = resultItems.value.findIndex((it) => it.name === target.name)
     if (idx >= 0 && item && item.match_type !== 'not_found') {
@@ -417,6 +439,15 @@ function copySchemeNew(scheme: SavedScheme) {
 <template>
   <div class="page">
     <van-nav-bar title="购物清单预检" left-arrow @click-left="$router.back()" />
+
+    <!-- 给谁买 -->
+    <div class="profile-bar" @click="showProfileSwitch = true">
+      <span class="profile-bar-label">给谁买</span>
+      <span class="profile-bar-value">
+        {{ userStore.activeProfile ? `${userStore.activeProfile.emoji || '👤'} ${userStore.activeProfile.name}` : '未选择' }}
+      </span>
+      <van-icon name="arrow-down" />
+    </div>
 
     <!-- 方形输入区 -->
     <div class="input-box">
@@ -662,6 +693,15 @@ function copySchemeNew(scheme: SavedScheme) {
         </div>
       </div>
     </transition>
+
+    <!-- 给谁买切换 -->
+    <van-action-sheet
+      v-model:show="showProfileSwitch"
+      title="给谁买"
+      :actions="profileActions"
+      cancel-text="取消"
+      @select="onSelectProfile"
+    />
   </div>
 </template>
 
@@ -670,6 +710,23 @@ function copySchemeNew(scheme: SavedScheme) {
   --input-h: 240px; /* 导入文本框固定高度 */
   min-height: 100vh;
   padding-bottom: 24px;
+}
+.profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.profile-bar-label {
+  color: #969799;
+}
+.profile-bar-value {
+  flex: 1;
+  font-weight: 500;
 }
 .input-box {
   margin: 12px 16px;

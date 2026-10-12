@@ -23,8 +23,8 @@ export interface PrecheckResult {
   items: PrecheckItem[]
 }
 
-export const precheckApi = (items: string[]) =>
-  request.post<PrecheckResult>('/shopping-list/precheck', { items }).then((r) => r.data)
+export const precheckApi = (items: string[], profileId?: number | null) =>
+  request.post<PrecheckResult>('/shopping-list/precheck', { items, profile_id: profileId ?? null }).then((r) => r.data)
 
 export const rematchApi = (name: string, excludeIds: number[]) =>
   request.post<ProductBrief[]>('/shopping-list/rematch', { name, exclude_ids: excludeIds }).then((r) => r.data)

@@ -14,6 +14,7 @@ class ScanHistory(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
+    profile_id: int | None = Field(default=None, foreign_key="profile.id", index=True)  # 为谁扫的（家庭档案）
     barcode: str = Field(index=True)
     product_id: int | None = None  # 商品数据来自 mock，故不设外键
     product_name: str = ""  # 冗余保存，历史列表免联表

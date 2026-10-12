@@ -34,8 +34,8 @@ export interface ScanRecord {
   analysis: Analysis | null
 }
 
-export const createScanApi = (barcode: string, source = 'manual') =>
-  request.post<ScanRecord>('/scan', { barcode, source }).then((r) => r.data)
+export const createScanApi = (barcode: string, source = 'manual', profileId?: number | null) =>
+  request.post<ScanRecord>('/scan', { barcode, source, profile_id: profileId ?? null }).then((r) => r.data)
 
 export const getScanApi = (scanId: number) =>
   request.get<ScanRecord>(`/scan/${scanId}`).then((r) => r.data)

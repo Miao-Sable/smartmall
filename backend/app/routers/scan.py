@@ -7,15 +7,16 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.deps import get_current_user
 from app.models.scan import AnalysisResult, ScanHistory
-from app.models.user import User
+from app.models.user import Profile, User
 from app.schemas.scan import AnalysisOut, ScanCreate, ScanOut
-from app.services.matching import analyze_product, light_label, load_user_allergens, load_user_diets
+from app.services.matching import analyze_product, light_label, load_profile_allergens, load_profile_diets
 from app.services.mock_data import find_product_by_barcode
+from app.services.profiles import resolve_profile_id
 
 router = APIRouter()
 
 
-def _to_scan_out(scan: ScanHistory, result: Optional[AnalysisResult]) -> ScanOut:
+def _to_scan_out(scan: ScanHistory, result: Optional[AnalysisResult], session: Session) -> ScanOut:
     analysis = None
     if result is not None:
         analysis = AnalysisOut(
@@ -27,6 +28,10 @@ def _to_scan_out(scan: ScanHistory, result: Optional[AnalysisResult]) -> ScanOut
             reasons=result.reasons or [],
             recommended=result.recommended,
         )
+    profile_name = ""
+    if scan.profile_id is not None:
+        profile = session.get(Profile, scan.profile_id)
+        profile_name = profile.name if profile else ""
     return ScanOut(
         id=scan.id,
         barcode=scan.barcode,
@@ -37,6 +42,8 @@ def _to_scan_out(scan: ScanHistory, result: Optional[AnalysisResult]) -> ScanOut
         has_allergen=scan.has_allergen,
         source=scan.source,
         created_at=scan.created_at,
+        profile_id=scan.profile_id,
+        profile_name=profile_name,
         analysis=analysis,
     )
 
@@ -51,14 +58,16 @@ def create_scan(
     if product is None:
         raise HTTPException(status_code=404, detail="暂无该商品数据，请尝试扫描其他条码")
 
+    profile_id = resolve_profile_id(session, user.id, data.profile_id)
     analysis = analyze_product(
         product,
-        load_user_allergens(session, user.id),
-        load_user_diets(session, user.id),
+        load_profile_allergens(session, profile_id),
+        load_profile_diets(session, profile_id),
     )
 
     scan = ScanHistory(
         user_id=user.id,
+        profile_id=profile_id,
         barcode=data.barcode,
         product_id=product["id"],
         product_name=product["name"],
@@ -83,7 +92,7 @@ def create_scan(
     session.add(result)
     session.commit()
 
-    return _to_scan_out(scan, result)
+    return _to_scan_out(scan, result, session)
 
 
 @router.get("/history", response_model=list[ScanOut])
@@ -99,7 +108,7 @@ def get_history(
     if ids:
         for r in session.exec(select(AnalysisResult).where(AnalysisResult.scan_id.in_(ids))):
             results[r.scan_id] = r
-    return [_to_scan_out(s, results.get(s.id)) for s in scans]
+    return [_to_scan_out(s, results.get(s.id), session) for s in scans]
 
 
 @router.get("/{scan_id}", response_model=ScanOut)
@@ -112,4 +121,4 @@ def get_scan_detail(
     if scan is None or scan.user_id != user.id:
         raise HTTPException(status_code=404, detail="扫描记录不存在")
     result = session.exec(select(AnalysisResult).where(AnalysisResult.scan_id == scan.id)).first()
-    return _to_scan_out(scan, result)
+    return _to_scan_out(scan, result, session)

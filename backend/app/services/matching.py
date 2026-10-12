@@ -9,7 +9,7 @@
 """
 from sqlmodel import Session, select
 
-from app.models.user import Allergen, DietPreference, UserAllergen, UserDiet
+from app.models.user import Allergen, DietPreference, ProfileAllergen, ProfileDiet
 from app.services.mock_data import load_price_history
 
 # 红黄绿交通灯中文文案（唯一来源，前后端保持一致）
@@ -20,20 +20,20 @@ def light_label(light: str) -> str:
     return LIGHT_LABELS.get(light, "适合")
 
 
-def load_user_allergens(session: Session, user_id: int) -> list[dict]:
+def load_profile_allergens(session: Session, profile_id: int) -> list[dict]:
     rows = session.exec(
         select(Allergen)
-        .join(UserAllergen, UserAllergen.allergen_id == Allergen.id)
-        .where(UserAllergen.user_id == user_id)
+        .join(ProfileAllergen, ProfileAllergen.allergen_id == Allergen.id)
+        .where(ProfileAllergen.profile_id == profile_id)
     ).all()
     return [{"name": a.name, "keywords": a.keywords or []} for a in rows]
 
 
-def load_user_diets(session: Session, user_id: int) -> list[dict]:
+def load_profile_diets(session: Session, profile_id: int) -> list[dict]:
     rows = session.exec(
         select(DietPreference)
-        .join(UserDiet, UserDiet.diet_id == DietPreference.id)
-        .where(UserDiet.user_id == user_id)
+        .join(ProfileDiet, ProfileDiet.diet_id == DietPreference.id)
+        .where(ProfileDiet.profile_id == profile_id)
     ).all()
     return [{"name": d.name, "keywords": d.keywords or []} for d in rows]
 

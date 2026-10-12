@@ -24,6 +24,7 @@ class PrecheckItemOut(BaseModel):
 
 class ShoppingListPrecheckRequest(BaseModel):
     items: list[str] = []
+    profile_id: int | None = None  # 为谁预检（家庭档案），空则取默认档案
 
 
 class ShoppingListPrecheckOut(BaseModel):

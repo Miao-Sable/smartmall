@@ -1,0 +1,66 @@
+[
+  {
+    "key": "child",
+    "name": "儿童",
+    "emoji": "👶",
+    "description": "儿童常见过敏（花生/牛奶/鸡蛋）+ 少糖",
+    "allergen_names": ["花生", "牛奶", "鸡蛋"],
+    "diet_names": ["低糖"]
+  },
+  {
+    "key": "elder",
+    "name": "老人",
+    "emoji": "👵",
+    "description": "三高人群少糖少油",
+    "allergen_names": [],
+    "diet_names": ["低糖", "低脂"]
+  },
+  {
+    "key": "pregnant",
+    "name": "孕妇",
+    "emoji": "🤰",
+    "description": "谨慎水产类，减少刺激性食物",
+    "allergen_names": ["海鲜/鱼类"],
+    "diet_names": []
+  },
+  {
+    "key": "low_sugar",
+    "name": "控糖",
+    "emoji": "🩸",
+    "description": "减少精制糖摄入",
+    "allergen_names": [],
+    "diet_names": ["低糖"]
+  },
+  {
+    "key": "low_fat",
+    "name": "减脂",
+    "emoji": "🔥",
+    "description": "低脂低糖，控制热量",
+    "allergen_names": [],
+    "diet_names": ["低脂", "低糖"]
+  },
+  {
+    "key": "fitness",
+    "name": "健身",
+    "emoji": "💪",
+    "description": "低脂饮食，关注蛋白质",
+    "allergen_names": [],
+    "diet_names": ["低脂"]
+  },
+  {
+    "key": "vegetarian",
+    "name": "素食",
+    "emoji": "🥗",
+    "description": "不含动物成分",
+    "allergen_names": [],
+    "diet_names": ["素食"]
+  },
+  {
+    "key": "gluten_free",
+    "name": "无麸质",
+    "emoji": "🌾",
+    "description": "避免麸质蛋白",
+    "allergen_names": ["小麦（麸质）"],
+    "diet_names": ["无麸质"]
+  }
+]

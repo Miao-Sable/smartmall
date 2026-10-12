@@ -15,3 +15,12 @@ class DietOut(BaseModel):
     name: str
     keywords: list[str] = []
     description: str = ""
+
+
+class ScenarioOut(BaseModel):
+    key: str
+    name: str
+    emoji: str = ""
+    description: str = ""
+    allergen_ids: list[int] = []
+    diet_ids: list[int] = []

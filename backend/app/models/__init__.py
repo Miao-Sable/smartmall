@@ -8,7 +8,17 @@ from app.models.product import (
     ProductNutrition,
 )
 from app.models.scan import AnalysisResult, ScanHistory
-from app.models.user import Allergen, DietPreference, User, UserAllergen, UserDiet, UserProfile
+from app.models.user import (
+    Allergen,
+    DietPreference,
+    Profile,
+    ProfileAllergen,
+    ProfileDiet,
+    User,
+    UserAllergen,
+    UserDiet,
+    UserProfile,
+)
 
 __all__ = [
     "Allergen",
@@ -20,6 +30,9 @@ __all__ = [
     "ProductBarcode",
     "ProductIngredient",
     "ProductNutrition",
+    "Profile",
+    "ProfileAllergen",
+    "ProfileDiet",
     "ScanHistory",
     "User",
     "UserAllergen",

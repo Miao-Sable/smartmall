@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class ScanCreate(BaseModel):
     barcode: str
     source: str = "manual"  # camera / manual
+    profile_id: int | None = None  # 为谁扫的（家庭档案），空则取默认档案
 
 
 class AllergenHit(BaseModel):
@@ -40,4 +41,6 @@ class ScanOut(BaseModel):
     has_allergen: bool = False
     source: str = "manual"
     created_at: datetime
+    profile_id: int | None = None
+    profile_name: str = ""
     analysis: AnalysisOut | None = None
