@@ -1,22 +1,33 @@
 """首页仪表板统计"""
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from app.database import get_session
 from app.deps import get_current_user
 from app.models.scan import ScanHistory
-from app.models.user import User
+from app.models.user import Profile, User
 from app.schemas.stats import DailyCount, StatsOverview
 
 router = APIRouter()
 
 
 @router.get("/overview", response_model=StatsOverview)
-def overview(user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> StatsOverview:
+def overview(
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    profile_id: int | None = None,
+) -> StatsOverview:
     # 个人开发版数据量小，先全量读取；后续可改为 SQL 聚合
-    scans = session.exec(select(ScanHistory).where(ScanHistory.user_id == user.id)).all()
+    query = select(ScanHistory).where(ScanHistory.user_id == user.id)
+    if profile_id is not None:
+        # 按档案筛选：校验档案归属该账号，不归属则 404
+        profile = session.get(Profile, profile_id)
+        if profile is None or profile.user_id != user.id:
+            raise HTTPException(status_code=404, detail="档案不存在")
+        query = query.where(ScanHistory.profile_id == profile_id)
+    scans = session.exec(query).all()
     today = date.today()
 
     counts: dict[str, int] = {}

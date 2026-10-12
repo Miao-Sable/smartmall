@@ -13,4 +13,9 @@ export interface StatsOverview {
   recent_days: DailyCount[]
 }
 
-export const getStatsApi = () => request.get<StatsOverview>('/stats/overview').then((r) => r.data)
+export const getStatsApi = (profileId?: number | null) =>
+  request
+    .get<StatsOverview>('/stats/overview', {
+      params: profileId == null ? undefined : { profile_id: profileId },
+    })
+    .then((r) => r.data)
