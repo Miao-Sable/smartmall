@@ -9,6 +9,7 @@ const router = createRouter({
     { path: '/history', name: 'history', component: () => import('@/pages/HistoryPage.vue'), meta: { title: '扫描历史', tabbar: true, requiresAuth: true } },
     { path: '/profile', name: 'profile', component: () => import('@/pages/ProfilePage.vue'), meta: { title: '我的', tabbar: true } },
     { path: '/profile/setup', name: 'profile-setup', component: () => import('@/pages/ProfileSetupPage.vue'), meta: { title: '档案设置', requiresAuth: true } },
+    { path: '/shopping-list', name: 'shopping-list', component: () => import('@/pages/ShoppingListPage.vue'), meta: { title: '购物清单预检', requiresAuth: true } },
     { path: '/product/:barcode', name: 'product', component: () => import('@/pages/ProductDetailPage.vue'), meta: { title: '商品详情' } },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { title: '登录' } },
     { path: '/register', name: 'register', component: () => import('@/pages/RegisterPage.vue'), meta: { title: '注册' } },
