@@ -25,6 +25,7 @@ def _to_review_out(session: Session, review: Review) -> ReviewOut:
         content=review.content,
         product_name=review.product_name,
         tag=review.tag,
+        barcode=review.barcode,
         author_nickname=_author_nickname(session, review.user_id),
         created_at=review.created_at,
     )
@@ -32,10 +33,14 @@ def _to_review_out(session: Session, review: Review) -> ReviewOut:
 
 @router.get("/reviews", response_model=list[ReviewOut])
 def list_reviews(
+    barcode: str = "",
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[ReviewOut]:
-    reviews = session.exec(select(Review).order_by(Review.created_at.desc()).limit(200)).all()
+    stmt = select(Review).order_by(Review.created_at.desc()).limit(200)
+    if barcode:
+        stmt = select(Review).where(Review.barcode == barcode).order_by(Review.created_at.desc()).limit(200)
+    reviews = session.exec(stmt).all()
     return [_to_review_out(session, r) for r in reviews]
 
 
@@ -53,6 +58,7 @@ def create_review(
         content=content,
         product_name=data.product_name.strip(),
         tag=data.tag,
+        barcode=data.barcode.strip(),
     )
     session.add(review)
     session.commit()

@@ -34,6 +34,9 @@ def _migrate_schema() -> None:
         "scan_history": {
             "profile_id": "INTEGER",
         },
+        "review": {
+            "barcode": "VARCHAR(64) NOT NULL DEFAULT ''",
+        },
     }
     with engine.begin() as conn:
         for table, cols in additions.items():
