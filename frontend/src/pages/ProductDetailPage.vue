@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { getPriceHistoryApi, getProductApi, type PricePoint, type Product } from '@/api/product'
 import { getScanApi, type ScanRecord } from '@/api/scan'
-import { scoreLevel, trafficColor } from '@/utils'
+import { createReviewApi, getProductReviewsApi, type Review } from '@/api/community'
+import { formatTime, scoreLevel, trafficColor } from '@/utils'
 import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
 import { explainIngredient, searchIngredients, type IngredientExplanation } from '@/utils/ingredientExplain'
 import { useUserStore } from '@/stores/user'
 import PriceTrendChart from '@/components/PriceTrendChart.vue'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const barcode = route.params.barcode as string
 const scanId = Number(route.query.scan_id ?? 0)
@@ -25,7 +27,82 @@ const hitNames = computed(() =>
   [...new Set((scan.value?.analysis?.allergen_hits ?? []).map((h) => h.allergen_name))].join('、'),
 )
 
+// ---- 用户评价 ----
+const TAG_OPTIONS = [
+  { value: '', label: '无标签' },
+  { value: 'recommend', label: '推荐' },
+  { value: 'avoid', label: '避坑' },
+]
+const reviews = ref<Review[]>([])
+const reviewsLoaded = ref(false)
+const showReview = ref(false)
+const reviewContent = ref('')
+const reviewTag = ref('')
+const submitting = ref(false)
+
+async function loadReviews() {
+  if (!userStore.isLoggedIn || isOffline()) {
+    reviewsLoaded.value = true
+    return
+  }
+  try {
+    reviews.value = await getProductReviewsApi(barcode)
+  } catch {
+    // 未登录/网络异常由拦截器提示，此处静默
+  } finally {
+    reviewsLoaded.value = true
+  }
+}
+
+function openReview() {
+  if (isOffline()) {
+    showToast('离线状态下无法发布评价')
+    return
+  }
+  if (!userStore.isLoggedIn) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
+  reviewContent.value = ''
+  reviewTag.value = ''
+  showReview.value = true
+}
+
+async function submitReview() {
+  const text = reviewContent.value.trim()
+  if (!text) {
+    showToast('请输入评价内容')
+    return
+  }
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    await createReviewApi({
+      content: text,
+      product_name: product.value?.name ?? '',
+      tag: reviewTag.value,
+      barcode,
+    })
+    showToast({ message: '发布成功', type: 'success' })
+    showReview.value = false
+    await loadReviews()
+  } catch {
+    // 拦截器已统一提示
+  } finally {
+    submitting.value = false
+  }
+}
+
+function tagLabel(tag: string) {
+  return tag === 'recommend' ? '推荐' : tag === 'avoid' ? '避坑' : ''
+}
+
+function tagType(tag: string): 'success' | 'danger' {
+  return tag === 'recommend' ? 'success' : 'danger'
+}
+
 onMounted(async () => {
+  void loadReviews()
   try {
     if (route.query.offline === '1' || isOffline()) {
       loadOffline()
@@ -184,6 +261,28 @@ function levelLabel(level: string) {
         <van-cell v-for="n in product.nutrition" :key="n.name" :title="n.name" :value="`${n.value} ${n.unit}`" />
       </van-cell-group>
 
+      <!-- 用户评价 -->
+      <van-cell-group inset title="用户评价">
+        <div class="reviews">
+          <template v-if="reviews.length">
+            <div v-for="r in reviews" :key="r.id" class="review-card">
+              <div class="review-head">
+                <span class="review-author">{{ r.author_nickname || '匿名' }}</span>
+                <span class="review-time">{{ formatTime(r.created_at) }}</span>
+              </div>
+              <div class="review-meta">
+                <van-tag v-if="tagLabel(r.tag)" :type="tagType(r.tag)" class="review-tag">
+                  {{ tagLabel(r.tag) }}
+                </van-tag>
+              </div>
+              <div class="review-content">{{ r.content }}</div>
+            </div>
+          </template>
+          <van-empty v-else-if="reviewsLoaded" description="暂无评价，来写第一条" />
+          <van-button block round plain class="review-btn" @click="openReview">写评价</van-button>
+        </div>
+      </van-cell-group>
+
       <!-- 价格趋势（模拟数据） -->
       <van-cell-group inset title="历史价格趋势（模拟）">
         <div v-if="points.length" class="chart-wrap">
@@ -192,6 +291,35 @@ function levelLabel(level: string) {
         <van-empty v-else image="search" description="暂无价格数据" />
       </van-cell-group>
 
+      <!-- 写评价弹层 -->
+      <van-popup v-model:show="showReview" position="bottom" round class="review-popup">
+        <div class="rv-head">评价「{{ product.name }}」</div>
+        <div class="rv-body">
+          <van-field
+            v-model="reviewContent"
+            type="textarea"
+            rows="3"
+            autosize
+            maxlength="200"
+            show-word-limit
+            placeholder="说说这款商品怎么样，值不值得买…"
+          />
+          <div class="tag-row">
+            <span
+              v-for="opt in TAG_OPTIONS"
+              :key="opt.value"
+              class="tag-chip"
+              :class="{ active: reviewTag === opt.value }"
+              @click="reviewTag = opt.value"
+            >
+              {{ opt.label }}
+            </span>
+          </div>
+        </div>
+        <div class="rv-footer">
+          <van-button block round plain @click="showReview = false">取消</van-button>
+          <van-button block round type="primary" :loading="submitting" @click="submitReview">发布</van-button>
+        </div>
       <!-- 成分解释弹层 -->
       <van-popup v-model:show="showIngredient" position="bottom" round class="ing-popup">
         <template v-if="activeIngredient">
@@ -466,5 +594,84 @@ function levelLabel(level: string) {
   color: #969799;
   font-size: 12px;
   line-height: 1.6;
+}
+.reviews {
+  padding: 12px 16px;
+}
+.review-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid #f2f3f5;
+}
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.review-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323233;
+}
+.review-time {
+  font-size: 12px;
+  color: #969799;
+}
+.review-meta {
+  margin: 6px 0;
+}
+.review-tag {
+  margin-right: 8px;
+}
+.review-content {
+  font-size: 14px;
+  color: #323233;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.review-btn {
+  margin-top: 4px;
+}
+.review-popup {
+  padding: 16px;
+}
+.rv-head {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.rv-body {
+  background: #f7f8fa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.tag-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+}
+.tag-chip {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 16px;
+  background: #f2f3f5;
+  color: #646566;
+  font-size: 13px;
+}
+.tag-chip.active {
+  background: #ecf5ff;
+  color: #1989fa;
+  font-weight: 600;
+}
+.rv-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
 }
 </style>

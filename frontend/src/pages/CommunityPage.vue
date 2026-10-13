@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { showToast } from 'vant'
 import { createReviewApi, getReviewsApi, type Review } from '@/api/community'
+import { searchProductsApi, type ProductBrief } from '@/api/shopping-list'
 import { formatTime } from '@/utils'
 
 const reviews = ref<Review[]>([])
@@ -11,6 +12,11 @@ const content = ref('')
 const productName = ref('')
 const tag = ref('')
 const submitting = ref(false)
+const candidates = ref<ProductBrief[]>([])
+const selected = ref<ProductBrief | null>(null)
+const matching = ref(false)
+const searchedName = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 const TAG_OPTIONS = [
   { value: '', label: '无标签' },
@@ -46,7 +52,53 @@ function openPost() {
   content.value = ''
   productName.value = ''
   tag.value = ''
+  candidates.value = []
+  selected.value = null
+  searchedName.value = ''
   showPost.value = true
+}
+
+watch(productName, () => {
+  const name = productName.value.trim()
+  searchedName.value = ''
+  candidates.value = []
+  // 已选定该商品，输入不再触发搜索
+  if (selected.value && selected.value.name === name) return
+  selected.value = null
+  if (searchTimer) clearTimeout(searchTimer)
+  if (!name) return
+  searchTimer = setTimeout(() => resolveProduct(name), 400)
+})
+
+async function resolveProduct(name: string) {
+  matching.value = true
+  try {
+    const results = await searchProductsApi(name)
+    if (productName.value.trim() === name) {
+      candidates.value = results
+      searchedName.value = name
+    }
+  } catch {
+    if (productName.value.trim() === name) {
+      candidates.value = []
+      searchedName.value = name
+    }
+  } finally {
+    matching.value = false
+  }
+}
+
+function selectProduct(p: ProductBrief) {
+  selected.value = p
+  productName.value = p.name
+  candidates.value = []
+  searchedName.value = ''
+}
+
+function clearProduct() {
+  selected.value = null
+  productName.value = ''
+  candidates.value = []
 }
 
 async function onSubmit() {
@@ -55,10 +107,20 @@ async function onSubmit() {
     showToast('请输入评价内容')
     return
   }
+  const name = productName.value.trim()
+  if (name && !selected.value) {
+    showToast('请从候选列表选择商品，或清空商品名')
+    return
+  }
   if (submitting.value) return
   submitting.value = true
   try {
-    await createReviewApi({ content: text, product_name: productName.value.trim(), tag: tag.value })
+    await createReviewApi({
+      content: text,
+      product_name: selected.value?.name ?? '',
+      tag: tag.value,
+      barcode: selected.value?.barcode ?? '',
+    })
     showToast({ message: '发布成功', type: 'success' })
     showPost.value = false
     await loadReviews()
@@ -107,7 +169,23 @@ async function onSubmit() {
           show-word-limit
           placeholder="说说这个商品怎么样（含不含过敏源、值不值得买…）"
         />
-        <van-field v-model="productName" placeholder="商品名（选填）" maxlength="30" />
+        <van-field v-model="productName" placeholder="输入商品名，从候选列表选择" maxlength="30" />
+        <div v-if="selected" class="match-hint">
+          <span class="match-ok">已选择：{{ selected.name }}</span>
+          <van-icon name="cross" class="match-clear" @click="clearProduct" />
+        </div>
+        <div v-else-if="productName.trim()" class="match-hint">
+          <van-loading v-if="matching" size="14" class="match-loading" />
+          <template v-else>
+            <span v-if="searchedName && !candidates.length" class="match-none">暂无该商品，无法评价</span>
+          </template>
+        </div>
+        <div v-if="!selected && candidates.length" class="candidate-list">
+          <div v-for="c in candidates" :key="c.id" class="candidate-item" @click="selectProduct(c)">
+            <span class="candidate-name">{{ c.name }}</span>
+            <span class="candidate-cat">{{ c.category }}</span>
+          </div>
+        </div>
         <div class="tag-row">
           <span
             v-for="opt in TAG_OPTIONS"
@@ -214,5 +292,51 @@ async function onSubmit() {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+}
+.match-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px 12px;
+  background: #fff;
+  font-size: 13px;
+}
+.match-loading {
+  vertical-align: middle;
+}
+.match-ok {
+  color: #07c160;
+}
+.match-none {
+  color: #ee0a24;
+}
+.match-clear {
+  margin-left: auto;
+  color: #969799;
+  cursor: pointer;
+}
+.candidate-list {
+  background: #fff;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0 16px 8px;
+}
+.candidate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f2f3f5;
+}
+.candidate-item:last-child {
+  border-bottom: none;
+}
+.candidate-name {
+  font-size: 14px;
+  color: #323233;
+}
+.candidate-cat {
+  font-size: 12px;
+  color: #969799;
 }
 </style>

@@ -8,6 +8,7 @@ class ReviewCreate(BaseModel):
     content: str
     product_name: str = ""
     tag: str = ""
+    barcode: str = ""
 
 
 class ReviewOut(BaseModel):
@@ -15,5 +16,6 @@ class ReviewOut(BaseModel):
     content: str
     product_name: str
     tag: str
+    barcode: str
     author_nickname: str
     created_at: datetime

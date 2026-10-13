@@ -28,3 +28,6 @@ export const precheckApi = (items: string[], profileId?: number | null) =>
 
 export const rematchApi = (name: string, excludeIds: number[]) =>
   request.post<ProductBrief[]>('/shopping-list/rematch', { name, exclude_ids: excludeIds }).then((r) => r.data)
+
+export const searchProductsApi = (name: string) =>
+  request.get<ProductBrief[]>('/products/search', { params: { name } }).then((r) => r.data)

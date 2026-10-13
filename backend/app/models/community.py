@@ -14,4 +14,5 @@ class Review(SQLModel, table=True):
     content: str = ""            # 评价正文
     product_name: str = ""       # 可选：关联商品名（自由文本，不建外键）
     tag: str = ""                # 可选：recommend / avoid / ""（无标签）
+    barcode: str = Field(default="", index=True)  # 可选：关联商品条码，用于商品详情页评价
     created_at: datetime = Field(default_factory=utcnow)
