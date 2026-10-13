@@ -183,10 +183,23 @@ def delete_profile(
         raise HTTPException(status_code=404, detail="档案不存在")
     if profile.is_default:
         raise HTTPException(status_code=400, detail="默认档案不可删除")
+
+    # 该档案名下的扫描记录迁移到默认档案，避免删除后历史悬空、档案名丢失
+    default = get_or_create_default_profile(session, user.id)
+    scans = session.exec(select(ScanHistory).where(ScanHistory.profile_id == profile.id)).all()
+    for scan in scans:
+        scan.profile_id = default.id
+
     for row in session.exec(select(ProfileAllergen).where(ProfileAllergen.profile_id == profile.id)):
         session.delete(row)
     for row in session.exec(select(ProfileDiet).where(ProfileDiet.profile_id == profile.id)):
         session.delete(row)
     session.delete(profile)
     session.commit()
+
+    # 迁移后按默认档案的偏好重算分析结果，避免沿用已删除档案的过敏/饮食结论
+    if scans:
+        _recompute_scan_analysis(session, default.id)
+        session.commit()
+
     return Response(status_code=204)

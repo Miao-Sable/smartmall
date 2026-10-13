@@ -18,14 +18,30 @@ const matching = ref(false)
 const searchedName = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
+// ---- 搜索商品评价（自动匹配原理与写评价一致） ----
+const searchText = ref('')
+const searchCandidates = ref<ProductBrief[]>([])
+const searchSelected = ref<ProductBrief | null>(null)
+const searchMatching = ref(false)
+const searchDone = ref('')
+let filterTimer: ReturnType<typeof setTimeout> | undefined
+
 const TAG_OPTIONS = [
   { value: '', label: '无标签' },
   { value: 'recommend', label: '推荐' },
   { value: 'avoid', label: '避坑' },
 ]
 
+const filteredReviews = computed(() => {
+  const p = searchSelected.value
+  if (!p) return reviews.value
+  return reviews.value.filter((r) =>
+    (p.barcode && r.barcode === p.barcode) || (!r.barcode && r.product_name === p.name),
+  )
+})
+
 const displayReviews = computed(() =>
-  reviews.value.map((r) => ({
+  filteredReviews.value.map((r) => ({
     ...r,
     time: formatTime(r.created_at),
     tag: r.tag === 'recommend'
@@ -48,12 +64,12 @@ async function loadReviews() {
 
 onMounted(loadReviews)
 
-function openPost() {
+function openPost(product?: ProductBrief) {
   content.value = ''
-  productName.value = ''
+  productName.value = product?.name ?? ''
   tag.value = ''
   candidates.value = []
-  selected.value = null
+  selected.value = product ?? null
   searchedName.value = ''
   showPost.value = true
 }
@@ -101,6 +117,50 @@ function clearProduct() {
   candidates.value = []
 }
 
+watch(searchText, () => {
+  const name = searchText.value.trim()
+  searchDone.value = ''
+  searchCandidates.value = []
+  // 已选定该商品，输入不再触发搜索
+  if (searchSelected.value && searchSelected.value.name === name) return
+  searchSelected.value = null
+  if (filterTimer) clearTimeout(filterTimer)
+  if (!name) return
+  filterTimer = setTimeout(() => resolveSearch(name), 400)
+})
+
+async function resolveSearch(name: string) {
+  searchMatching.value = true
+  try {
+    const results = await searchProductsApi(name)
+    if (searchText.value.trim() === name) {
+      searchCandidates.value = results
+      searchDone.value = name
+    }
+  } catch {
+    if (searchText.value.trim() === name) {
+      searchCandidates.value = []
+      searchDone.value = name
+    }
+  } finally {
+    searchMatching.value = false
+  }
+}
+
+function selectSearchProduct(p: ProductBrief) {
+  searchSelected.value = p
+  searchText.value = p.name
+  searchCandidates.value = []
+  searchDone.value = ''
+}
+
+function clearSearch() {
+  searchSelected.value = null
+  searchText.value = ''
+  searchCandidates.value = []
+  searchDone.value = ''
+}
+
 async function onSubmit() {
   const text = content.value.trim()
   if (!text) {
@@ -134,12 +194,34 @@ async function onSubmit() {
 
 <template>
   <div class="page">
-    <van-nav-bar title="社区" right-text="发评价" @click-right="openPost" />
+    <van-nav-bar title="社区" right-text="发评价" @click-right="openPost()" />
+
+    <!-- 搜索商品评价：自动匹配原理与写评价一致 -->
+    <van-search v-model="searchText" clearable placeholder="搜索商品评价，如输入「肉」自动匹配" />
+    <div v-if="searchSelected" class="search-filter">
+      <span class="filter-label">「{{ searchSelected.name }}」的评价（{{ filteredReviews.length }}）</span>
+      <van-icon name="cross" class="filter-clear" @click="clearSearch" />
+    </div>
+    <div v-else-if="searchText.trim()" class="match-hint">
+      <van-loading v-if="searchMatching" size="14" class="match-loading" />
+      <template v-else>
+        <span v-if="searchDone && !searchCandidates.length" class="match-none">暂无该商品</span>
+      </template>
+    </div>
+    <div v-if="!searchSelected && searchCandidates.length" class="candidate-list">
+      <div v-for="c in searchCandidates" :key="c.id" class="candidate-item" @click="selectSearchProduct(c)">
+        <span class="candidate-name">{{ c.name }}</span>
+        <span class="candidate-cat">{{ c.category }}</span>
+      </div>
+    </div>
 
     <van-loading v-if="loading" class="center" size="24" />
     <template v-else>
       <van-empty v-if="!reviews.length" description="还没有评价，来发第一条吧">
-        <van-button round type="primary" @click="openPost">发评价</van-button>
+        <van-button round type="primary" @click="openPost()">发评价</van-button>
+      </van-empty>
+      <van-empty v-else-if="searchSelected && !filteredReviews.length" description="该商品还没有评价">
+        <van-button round type="primary" @click="openPost(searchSelected)">写第一条评价</van-button>
       </van-empty>
       <div v-else class="feed">
         <div v-for="r in displayReviews" :key="r.id" class="review-card">
@@ -338,5 +420,23 @@ async function onSubmit() {
 .candidate-cat {
   font-size: 12px;
   color: #969799;
+}
+.search-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 8px;
+  padding: 8px 12px;
+  background: #ecf5ff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1989fa;
+}
+.filter-label {
+  flex: 1;
+}
+.filter-clear {
+  color: #1989fa;
+  cursor: pointer;
 }
 </style>
