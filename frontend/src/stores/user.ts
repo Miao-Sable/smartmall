@@ -3,8 +3,10 @@ import { defineStore } from 'pinia'
 
 import { loginApi, registerApi } from '@/api/auth'
 import { getProfileApi, getProfilesApi, type Profile, type UserProfile } from '@/api/user'
+import { clearOfflineQueue, flushOfflineScans } from '@/utils/offlineSync'
 
 const ACTIVE_PROFILE_KEY = 'active-profile-id'
+const CACHED_PROFILES_KEY = 'cached-profiles'
 
 function readActiveProfileId(): number | null {
   const raw = localStorage.getItem(ACTIVE_PROFILE_KEY)
@@ -13,10 +15,21 @@ function readActiveProfileId(): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+function readProfiles(): Profile[] {
+  try {
+    const raw = localStorage.getItem(CACHED_PROFILES_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as Profile[]) : []
+  } catch {
+    return []
+  }
+}
+
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') ?? '')
   const profile = ref<UserProfile | null>(null)
-  const profiles = ref<Profile[]>([])
+  const profiles = ref<Profile[]>(readProfiles())
   const activeProfileId = ref<number | null>(readActiveProfileId())
 
   const isLoggedIn = computed(() => token.value !== '')
@@ -47,6 +60,8 @@ export const useUserStore = defineStore('user', () => {
     activeProfileId.value = null
     localStorage.removeItem('token')
     localStorage.removeItem(ACTIVE_PROFILE_KEY)
+    localStorage.removeItem(CACHED_PROFILES_KEY)
+    clearOfflineQueue()
   }
 
   async function fetchProfile() {
@@ -56,7 +71,13 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchProfiles() {
     if (!isLoggedIn.value) return
-    profiles.value = await getProfilesApi()
+    try {
+      profiles.value = await getProfilesApi()
+      localStorage.setItem(CACHED_PROFILES_KEY, JSON.stringify(profiles.value))
+      void flushOfflineScans()
+    } catch {
+      // 离线/失败时保留本地缓存
+    }
     if (activeProfileId.value == null || !profiles.value.some((p) => p.id === activeProfileId.value)) {
       setActiveProfile(defaultProfile.value?.id ?? null)
     }

@@ -5,6 +5,8 @@ import { showToast } from 'vant'
 import { Html5Qrcode } from 'html5-qrcode'
 import { createScanApi } from '@/api/scan'
 import { useUserStore } from '@/stores/user'
+import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
+import { queueOfflineScan } from '@/utils/offlineSync'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -76,13 +78,31 @@ async function submitScan(code: string, source: 'camera' | 'manual') {
   if (submitting) return
   submitting = true
   try {
+    // 明确断网：直接本地安全分析，不发请求
+    if (isOffline()) {
+      goOffline(code, source)
+      return
+    }
     const scan = await createScanApi(code, source, userStore.activeProfile?.id)
     router.push({ path: `/product/${code}`, query: { scan_id: scan.id } })
-  } catch {
-    // 商品不存在等错误已由拦截器提示
+  } catch (err) {
+    // 断网/超时 → 降级到本地；商品不存在等业务错误已由拦截器提示
+    if (isNetworkError(err)) goOffline(code, source)
   } finally {
     submitting = false
   }
+}
+
+function goOffline(code: string, source: 'camera' | 'manual') {
+  const result = analyzeLocal(code, userStore.activeProfile)
+  if (!result) {
+    showToast('暂无该商品数据')
+    return
+  }
+  // 记录扫码那一刻的档案，联网后按该档案补传
+  queueOfflineScan(code, source, userStore.activeProfile?.id ?? null)
+  showToast('已进入离线安全模式')
+  router.push({ path: `/product/${code}`, query: { offline: '1' } })
 }
 
 function onToggleScan() {

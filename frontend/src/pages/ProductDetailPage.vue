@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { showToast } from 'vant'
 import { getPriceHistoryApi, getProductApi, type PricePoint, type Product } from '@/api/product'
 import { getScanApi, type ScanRecord } from '@/api/scan'
 import { scoreLevel, trafficColor } from '@/utils'
+import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
+import { useUserStore } from '@/stores/user'
 import PriceTrendChart from '@/components/PriceTrendChart.vue'
 
 const route = useRoute()
+const userStore = useUserStore()
 const barcode = route.params.barcode as string
 const scanId = Number(route.query.scan_id ?? 0)
 
@@ -14,6 +18,7 @@ const product = ref<Product | null>(null)
 const scan = ref<ScanRecord | null>(null)
 const points = ref<PricePoint[]>([])
 const loading = ref(true)
+const offlineMode = ref(false)
 
 const hitNames = computed(() =>
   [...new Set((scan.value?.analysis?.allergen_hits ?? []).map((h) => h.allergen_name))].join('、'),
@@ -21,18 +26,37 @@ const hitNames = computed(() =>
 
 onMounted(async () => {
   try {
-    product.value = await getProductApi(barcode)
-    if (product.value) {
-      const history = await getPriceHistoryApi(product.value.id)
-      points.value = history.points
-      if (scanId) scan.value = await getScanApi(scanId)
+    if (route.query.offline === '1' || isOffline()) {
+      loadOffline()
+      return
     }
-  } catch {
-    // 拦截器已统一提示
+    try {
+      product.value = await getProductApi(barcode)
+      if (product.value) {
+        const history = await getPriceHistoryApi(product.value.id)
+        points.value = history.points
+        if (scanId) scan.value = await getScanApi(scanId)
+      }
+    } catch (err) {
+      // 断网/超时 → 本地降级；商品不存在等业务错误由拦截器提示
+      if (isNetworkError(err)) loadOffline()
+    }
   } finally {
     loading.value = false
   }
 })
+
+function loadOffline() {
+  const result = analyzeLocal(barcode, userStore.activeProfile)
+  if (!result) {
+    showToast('暂无该商品数据')
+    return
+  }
+  product.value = result.product
+  points.value = result.pricePoints
+  scan.value = result.scan
+  offlineMode.value = true
+}
 
 function isHit(ingredient: string) {
   return scan.value?.analysis?.allergen_hits.some((h) => h.ingredient === ingredient) ?? false
@@ -44,6 +68,13 @@ function isHit(ingredient: string) {
     <van-nav-bar title="商品详情" left-arrow @click-left="$router.back()" />
     <van-loading v-if="loading" class="center" size="24" />
     <template v-else-if="product">
+      <van-notice-bar
+        v-if="offlineMode"
+        color="#1989fa"
+        background="#ecf5ff"
+        wrapable
+        text="离线安全模式 · 本次结果来自本地，未保存到扫描历史"
+      />
       <!-- 基本信息 -->
       <div class="product-card">
         <van-image :src="product.image_url" width="72" height="72" radius="8" class="product-img">

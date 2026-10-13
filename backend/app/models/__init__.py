@@ -1,4 +1,5 @@
 """数据库模型汇总（导入以注册到 SQLModel.metadata）"""
+from app.models.community import Review
 from app.models.product import (
     KeywordLibrary,
     PriceHistory,
@@ -33,6 +34,7 @@ __all__ = [
     "Profile",
     "ProfileAllergen",
     "ProfileDiet",
+    "Review",
     "ScanHistory",
     "User",
     "UserAllergen",
