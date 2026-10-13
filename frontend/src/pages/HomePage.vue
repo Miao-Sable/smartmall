@@ -47,7 +47,7 @@ onMounted(async () => {
         </span>
       </div>
 
-      <!-- 核心统计（TODO：后续用 ECharts 展示近 7 天扫描趋势） -->
+      <!-- 核心统计 -->
       <van-grid :column-num="2" :border="false" class="stats-grid">
         <van-grid-item icon="scan" :text="`${stats.total_scans} 次累计扫描`" />
         <van-grid-item icon="warning-o" :text="`${stats.allergen_alerts} 次过敏警报`" />
