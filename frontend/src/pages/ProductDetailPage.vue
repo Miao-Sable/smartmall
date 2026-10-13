@@ -320,6 +320,7 @@ function levelLabel(level: string) {
           <van-button block round plain @click="showReview = false">取消</van-button>
           <van-button block round type="primary" :loading="submitting" @click="submitReview">发布</van-button>
         </div>
+      </van-popup>
       <!-- 成分解释弹层 -->
       <van-popup v-model:show="showIngredient" position="bottom" round class="ing-popup">
         <template v-if="activeIngredient">
