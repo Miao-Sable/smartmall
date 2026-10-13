@@ -8,7 +8,7 @@
 """
 from sqlmodel import Session
 
-from app.services.matching import load_user_allergens, load_user_diets, match_allergens, match_diets
+from app.services.matching import load_profile_allergens, load_profile_diets, match_allergens, match_diets
 from app.services.mock_data import latest_price, load_products, match_product
 
 MAX_ALTERNATIVES = 2
@@ -26,9 +26,9 @@ def _brief(product: dict) -> dict:
     }
 
 
-def precheck_items(session: Session, user_id: int, names: list[str]) -> list[dict]:
-    allergens = load_user_allergens(session, user_id)
-    diets = load_user_diets(session, user_id)
+def precheck_items(session: Session, profile_id: int, names: list[str]) -> list[dict]:
+    allergens = load_profile_allergens(session, profile_id)
+    diets = load_profile_diets(session, profile_id)
     return [precheck_one(name, allergens, diets) for name in names if (name or "").strip()]
 
 

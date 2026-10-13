@@ -6,6 +6,7 @@ import 'vant/lib/index.css'
 import App from './App.vue'
 import router from './router'
 import './styles/index.css'
+import { initOfflineSync } from './utils/offlineSync'
 
 const app = createApp(App)
 
@@ -15,3 +16,6 @@ app.use(router)
 app.use(Vant)
 
 app.mount('#app')
+
+// 离线扫描补传：联网后自动同步积压的离线记录
+initOfflineSync()

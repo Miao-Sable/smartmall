@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { getAllergensApi, getDietPreferencesApi, type Allergen, type DietPreference } from '@/api/meta'
-import { getProfileApi, updateProfileApi } from '@/api/user'
+import { getProfilesApi, updateMemberProfileApi, updateProfileApi, type Profile } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,27 +11,28 @@ const router = useRouter()
 const isOnboarding = route.query.from === 'login'
 const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
 
-// 昵称已移到「我的」页修改，这里仅用于保存时回传，避免被清空
-const nickname = ref('')
 const allergenIds = ref<number[]>([])
 const dietIds = ref<number[]>([])
 const allergens = ref<Allergen[]>([])
 const diets = ref<DietPreference[]>([])
+const profiles = ref<Profile[]>([])
 const loading = ref(true)
 const saving = ref(false)
 
+const defaultProfile = computed(() => profiles.value.find((p) => p.is_default) ?? profiles.value[0] ?? null)
+
 onMounted(async () => {
   try {
-    const [allergenList, dietList, profile] = await Promise.all([
+    const [allergenList, dietList, profileList] = await Promise.all([
       getAllergensApi(),
       getDietPreferencesApi(),
-      getProfileApi(),
+      getProfilesApi(),
     ])
     allergens.value = allergenList
     diets.value = dietList
-    nickname.value = profile.nickname
-    allergenIds.value = profile.allergen_ids
-    dietIds.value = profile.diet_ids
+    profiles.value = profileList
+    allergenIds.value = [...(defaultProfile.value?.allergen_ids ?? [])]
+    dietIds.value = [...(defaultProfile.value?.diet_ids ?? [])]
   } catch {
     // 拦截器已统一提示
   } finally {
@@ -45,20 +46,31 @@ function toggleIn(list: number[], id: number) {
   else list.push(id)
 }
 
-async function onSkip() {
-  // 跳过也要标记「已完成引导」：写入空档案（创建 profile 行），下次登录不再引导
+// 首次引导时：仅需创建账号档案行，把「已引导」标记下来；昵称到「我的」页再填
+async function markOnboarded() {
+  if (!isOnboarding) return
   try {
     await updateProfileApi({})
   } catch {
     // 忽略失败，下次登录仍会引导
   }
+}
+
+async function onSkip() {
+  await markOnboarded()
   router.replace(redirect)
 }
 
 async function onSave() {
+  const pid = defaultProfile.value?.id
+  if (pid == null) {
+    showToast('档案尚未就绪，请稍后重试')
+    return
+  }
   saving.value = true
   try {
-    await updateProfileApi({ nickname: nickname.value, allergen_ids: allergenIds.value, diet_ids: dietIds.value })
+    await updateMemberProfileApi(pid, { allergen_ids: allergenIds.value, diet_ids: dietIds.value })
+    await markOnboarded()
     showToast({ message: '保存成功', type: 'success' })
     if (isOnboarding) router.replace(redirect)
   } catch {

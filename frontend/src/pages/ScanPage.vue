@@ -1,16 +1,39 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { Html5Qrcode } from 'html5-qrcode'
 import { createScanApi } from '@/api/scan'
+import { useUserStore } from '@/stores/user'
+import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
+import { queueOfflineScan } from '@/utils/offlineSync'
 
 const router = useRouter()
+const userStore = useUserStore()
 const barcode = ref('')
 const scanning = ref(false)
+const showProfileSwitch = ref(false)
 
 let scanner: Html5Qrcode | null = null
 let submitting = false
+
+onMounted(() => {
+  // 直接刷新进入扫码页时，确保档案已加载（activeProfile 才有效）
+  void userStore.fetchProfiles()
+})
+
+const profileActions = computed(() =>
+  userStore.profiles.map((p) => ({
+    name: `${p.emoji || '👤'} ${p.name}${p.is_default ? '（默认）' : ''}`,
+    id: p.id,
+  })),
+)
+
+function onSelectProfile(action: { name: string; id: number }) {
+  const p = userStore.profiles.find((x) => x.id === action.id)
+  if (p) userStore.setActiveProfile(p.id)
+  showProfileSwitch.value = false
+}
 
 async function startScan() {
   // 先切到扫描态并等容器可见；#qr-reader 用 v-show 常驻 DOM，构造函数才不会报「元素不存在」
@@ -55,13 +78,31 @@ async function submitScan(code: string, source: 'camera' | 'manual') {
   if (submitting) return
   submitting = true
   try {
-    const scan = await createScanApi(code, source)
+    // 明确断网：直接本地安全分析，不发请求
+    if (isOffline()) {
+      goOffline(code, source)
+      return
+    }
+    const scan = await createScanApi(code, source, userStore.activeProfile?.id)
     router.push({ path: `/product/${code}`, query: { scan_id: scan.id } })
-  } catch {
-    // 商品不存在等错误已由拦截器提示
+  } catch (err) {
+    // 断网/超时 → 降级到本地；商品不存在等业务错误已由拦截器提示
+    if (isNetworkError(err)) goOffline(code, source)
   } finally {
     submitting = false
   }
+}
+
+function goOffline(code: string, source: 'camera' | 'manual') {
+  const result = analyzeLocal(code, userStore.activeProfile)
+  if (!result) {
+    showToast('暂无该商品数据')
+    return
+  }
+  // 记录扫码那一刻的档案，联网后按该档案补传
+  queueOfflineScan(code, source, userStore.activeProfile?.id ?? null)
+  showToast('已进入离线安全模式')
+  router.push({ path: `/product/${code}`, query: { offline: '1' } })
 }
 
 function onToggleScan() {
@@ -86,6 +127,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="page">
     <van-nav-bar title="扫码" />
+    <div class="profile-bar" @click="showProfileSwitch = true">
+      <span class="profile-bar-label">给谁买</span>
+      <span class="profile-bar-value">
+        {{ userStore.activeProfile ? `${userStore.activeProfile.emoji || '👤'} ${userStore.activeProfile.name}` : '未选择' }}
+      </span>
+      <van-icon name="arrow-down" />
+    </div>
     <div class="scan-body">
       <div v-show="scanning" class="scan-area">
         <div id="qr-reader" class="qr-reader" />
@@ -105,6 +153,14 @@ onBeforeUnmount(() => {
         <p class="tip">示例条码：6901234567890（花生夹心燕麦饼干）</p>
       </div>
     </div>
+
+    <van-action-sheet
+      v-model:show="showProfileSwitch"
+      title="给谁买"
+      :actions="profileActions"
+      cancel-text="取消"
+      @select="onSelectProfile"
+    />
   </div>
 </template>
 
@@ -113,6 +169,23 @@ onBeforeUnmount(() => {
   min-height: calc(100vh - var(--van-tabbar-height, 50px));
   display: flex;
   flex-direction: column;
+}
+.profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.profile-bar-label {
+  color: #969799;
+}
+.profile-bar-value {
+  flex: 1;
+  font-weight: 500;
 }
 .scan-body {
   flex: 1;

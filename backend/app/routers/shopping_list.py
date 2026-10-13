@@ -13,6 +13,7 @@ from app.schemas.shopping_list import (
     ShoppingListPrecheckRequest,
 )
 from app.services.precheck import precheck_items, rematch_candidates
+from app.services.profiles import resolve_profile_id
 
 router = APIRouter()
 
@@ -23,7 +24,8 @@ def precheck(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ShoppingListPrecheckOut:
-    items = [PrecheckItemOut(**item) for item in precheck_items(session, user.id, data.items)]
+    profile_id = resolve_profile_id(session, user.id, data.profile_id)
+    items = [PrecheckItemOut(**item) for item in precheck_items(session, profile_id, data.items)]
     return ShoppingListPrecheckOut(items=items)
 
 

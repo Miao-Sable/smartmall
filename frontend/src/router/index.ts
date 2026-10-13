@@ -6,9 +6,12 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: () => import('@/pages/HomePage.vue'), meta: { title: '首页', tabbar: true } },
     { path: '/scan', name: 'scan', component: () => import('@/pages/ScanPage.vue'), meta: { title: '扫码', tabbar: true, requiresAuth: true } },
-    { path: '/history', name: 'history', component: () => import('@/pages/HistoryPage.vue'), meta: { title: '扫描历史', tabbar: true, requiresAuth: true } },
+    { path: '/history', name: 'history', component: () => import('@/pages/HistoryPage.vue'), meta: { title: '扫描历史', requiresAuth: true } },
+    { path: '/community', name: 'community', component: () => import('@/pages/CommunityPage.vue'), meta: { title: '社区', tabbar: true, requiresAuth: true } },
     { path: '/profile', name: 'profile', component: () => import('@/pages/ProfilePage.vue'), meta: { title: '我的', tabbar: true } },
     { path: '/profile/setup', name: 'profile-setup', component: () => import('@/pages/ProfileSetupPage.vue'), meta: { title: '档案设置', requiresAuth: true } },
+    { path: '/profiles', name: 'profiles', component: () => import('@/pages/ProfilesPage.vue'), meta: { title: '家庭成员', requiresAuth: true } },
+    { path: '/profiles/:id/edit', name: 'profile-edit', component: () => import('@/pages/ProfileEditPage.vue'), meta: { title: '编辑档案', requiresAuth: true } },
     { path: '/shopping-list', name: 'shopping-list', component: () => import('@/pages/ShoppingListPage.vue'), meta: { title: '购物清单预检', requiresAuth: true } },
     { path: '/product/:barcode', name: 'product', component: () => import('@/pages/ProductDetailPage.vue'), meta: { title: '商品详情' } },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { title: '登录' } },

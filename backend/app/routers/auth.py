@@ -6,6 +6,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.database import get_session
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.services.profiles import get_or_create_default_profile
 
 router = APIRouter()
 
@@ -28,6 +29,7 @@ def register(data: RegisterRequest, session: Session = Depends(get_session)) -> 
     session.add(user)
     session.commit()
     session.refresh(user)
+    get_or_create_default_profile(session, user.id)  # 注册即建默认档案「我」
     return _token_response(user)
 
 

@@ -27,11 +27,7 @@ async function onSaveNickname() {
     return
   }
   try {
-    await updateProfileApi({
-      nickname: nick,
-      allergen_ids: userStore.profile?.allergen_ids ?? [],
-      diet_ids: userStore.profile?.diet_ids ?? [],
-    })
+    await updateProfileApi({ nickname: nick })
     await userStore.fetchProfile()
     showToast({ message: '修改成功', type: 'success' })
   } catch {
@@ -54,6 +50,7 @@ function onLogout() {
         <van-cell title="昵称" is-link :value="userStore.profile?.nickname || '未设置'" @click="onEditNickname" />
       </van-cell-group>
       <van-cell-group inset title="功能">
+        <van-cell title="家庭成员" is-link to="/profiles" />
         <van-cell title="过敏源与饮食偏好" is-link to="/profile/setup" />
         <van-cell title="扫描历史" is-link to="/history" />
         <van-cell title="购物清单预检" is-link to="/shopping-list" />

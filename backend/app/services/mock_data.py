@@ -37,6 +37,10 @@ def load_diet_preferences() -> list:
     return _load("diet_preferences.json")
 
 
+def load_scenario_templates() -> list:
+    return _load("scenario_templates.json")
+
+
 def load_products() -> list:
     return _load("products.json")
 
