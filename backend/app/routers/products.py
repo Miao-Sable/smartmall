@@ -2,9 +2,16 @@
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.product import PriceHistoryOut, ProductOut
-from app.services.mock_data import find_product_by_barcode, load_price_history
+from app.schemas.shopping_list import ProductBrief
+from app.services.mock_data import find_product_by_barcode, load_price_history, search_products
 
 router = APIRouter()
+
+
+@router.get("/search", response_model=list[ProductBrief])
+def search_products_by_name(name: str) -> list[ProductBrief]:
+    """按名称搜索商品（供发评价选择商品），返回精简信息列表。"""
+    return [ProductBrief(**p) for p in search_products(name)]
 
 
 @router.get("/{barcode}", response_model=ProductOut)

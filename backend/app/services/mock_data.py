@@ -79,3 +79,20 @@ def latest_price(product_id: int) -> float:
     if not points:
         return 0.0
     return float(points[-1]["price"])
+
+
+def search_products(name: str, limit: int = 20) -> list[dict]:
+    """按名称搜索已收录商品，返回精简信息（供发评价选择商品等）。"""
+    _, candidates = match_product(name)
+    result: list[dict] = []
+    for c in candidates[:limit]:
+        result.append(
+            {
+                "id": c.get("id"),
+                "name": c.get("name", ""),
+                "barcode": str(c.get("barcode", "")),
+                "category": c.get("category", ""),
+                "price": latest_price(c.get("id")),
+            }
+        )
+    return result
