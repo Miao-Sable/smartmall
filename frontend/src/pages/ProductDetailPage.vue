@@ -6,6 +6,7 @@ import { getPriceHistoryApi, getProductApi, type PricePoint, type Product } from
 import { getScanApi, type ScanRecord } from '@/api/scan'
 import { scoreLevel, trafficColor } from '@/utils'
 import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
+import { explainIngredient, searchIngredients, type IngredientExplanation } from '@/utils/ingredientExplain'
 import { useUserStore } from '@/stores/user'
 import PriceTrendChart from '@/components/PriceTrendChart.vue'
 
@@ -58,8 +59,29 @@ function loadOffline() {
   offlineMode.value = true
 }
 
-function isHit(ingredient: string) {
-  return scan.value?.analysis?.allergen_hits.some((h) => h.ingredient === ingredient) ?? false
+// ---- 成分白话翻译 ----
+const LEVEL_LABELS: Record<string, string> = { high: '高风险', medium: '中风险', low: '安全', none: '未知' }
+
+const searchText = ref('')
+const searchResults = computed(() => (searchText.value.trim() ? searchIngredients(searchText.value.trim()) : []))
+const activeIngredient = ref<IngredientExplanation | null>(null)
+const showIngredient = ref(false)
+
+const ingredientItems = computed(() =>
+  (product.value?.ingredients ?? []).map((ing) => explainIngredient(ing, userStore.activeProfile)),
+)
+
+function openIngredient(name: string) {
+  activeIngredient.value = explainIngredient(name, userStore.activeProfile)
+  showIngredient.value = true
+}
+
+function levelClass(level: string) {
+  return `lvl-${level}`
+}
+
+function levelLabel(level: string) {
+  return LEVEL_LABELS[level] ?? '未知'
 }
 </script>
 
@@ -133,11 +155,26 @@ function isHit(ingredient: string) {
           text="未发现已知过敏源（分析仅供参考，请以包装说明为准）" />
       </van-cell-group>
 
-      <!-- 成分表（命中过敏源高亮） -->
-      <van-cell-group inset title="成分表">
+      <!-- 成分白话翻译 -->
+      <van-cell-group inset title="成分白话翻译">
+        <div class="ing-search">
+          <van-search v-model="searchText" placeholder="搜索成分，如「小苏打 / 苯甲酸钠 / E211」" />
+        </div>
+        <div v-if="searchResults.length" class="search-results">
+          <div v-for="e in searchResults" :key="e.name" class="search-item" @click="openIngredient(e.name)">
+            <span class="search-name">{{ e.plain_name }}</span>
+            <span class="search-cat">{{ e.category }}</span>
+          </div>
+        </div>
         <div class="ingredients">
-          <span v-for="ing in product.ingredients" :key="ing" class="ingredient" :class="{ hit: isHit(ing) }">
-            {{ ing }}
+          <span
+            v-for="it in ingredientItems"
+            :key="it.ingredient"
+            class="ingredient"
+            :class="levelClass(it.level)"
+            @click="openIngredient(it.ingredient)"
+          >
+            {{ it.ingredient }}
           </span>
         </div>
       </van-cell-group>
@@ -154,6 +191,56 @@ function isHit(ingredient: string) {
         </div>
         <van-empty v-else image="search" description="暂无价格数据" />
       </van-cell-group>
+
+      <!-- 成分解释弹层 -->
+      <van-popup v-model:show="showIngredient" position="bottom" round class="ing-popup">
+        <template v-if="activeIngredient">
+          <div class="ing-head">
+            <div class="ing-title">
+              {{ activeIngredient.entry?.plain_name || activeIngredient.ingredient }}
+            </div>
+            <div
+              v-if="activeIngredient.entry && activeIngredient.entry.plain_name !== activeIngredient.ingredient"
+              class="ing-origin"
+            >
+              原配料名：{{ activeIngredient.ingredient }}
+            </div>
+            <span class="ing-level-badge" :class="levelClass(activeIngredient.level)">
+              {{ levelLabel(activeIngredient.level) }}
+            </span>
+          </div>
+          <div class="ing-body">
+            <template v-if="activeIngredient.entry">
+              <div class="ing-row">
+                <span class="ing-k">类别</span>
+                <span class="ing-v">{{ activeIngredient.entry.category }}</span>
+              </div>
+              <div class="ing-row">
+                <span class="ing-k">作用</span>
+                <span class="ing-v">{{ activeIngredient.entry.function }}</span>
+              </div>
+              <div class="ing-row">
+                <span class="ing-k">风险</span>
+                <span class="ing-v">{{ activeIngredient.entry.risk }}</span>
+              </div>
+              <div v-if="activeIngredient.entry.e_numbers.length" class="ing-row">
+                <span class="ing-k">E 编号</span>
+                <span class="ing-v">{{ activeIngredient.entry.e_numbers.join('、') }}</span>
+              </div>
+              <div v-if="activeIngredient.entry.crowd_hints.length" class="ing-row">
+                <span class="ing-k">人群提示</span>
+                <span class="ing-v">{{ activeIngredient.entry.crowd_hints.join('、') }}</span>
+              </div>
+            </template>
+            <div v-else class="ing-empty">暂未收录该成分的白话解释，属常见食材或未收录成分。</div>
+          </div>
+          <div v-if="activeIngredient.reasons.length" class="ing-reasons">
+            <div v-for="(r, i) in activeIngredient.reasons" :key="i" class="reason" :class="levelClass(r.level)">
+              {{ r.label }}
+            </div>
+          </div>
+        </template>
+      </van-popup>
 
       <p class="disclaimer">
         本应用提供的过敏提醒和成分分析仅供参考，不构成医疗建议。请以商品包装说明和医生意见为准。
@@ -226,16 +313,150 @@ function isHit(ingredient: string) {
   gap: 8px;
   padding: 12px 16px;
 }
+.ing-search {
+  padding: 0 8px;
+}
+.ing-search :deep(.van-search) {
+  padding: 8px 0;
+  background: transparent;
+}
+.search-results {
+  padding: 4px 16px 8px;
+}
+.search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f2f3f5;
+}
+.search-name {
+  font-size: 14px;
+  color: #323233;
+}
+.search-cat {
+  font-size: 12px;
+  color: #969799;
+}
+.ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+}
 .ingredient {
   padding: 4px 10px;
   border-radius: 12px;
   background: #f2f3f5;
   font-size: 13px;
 }
-.ingredient.hit {
-  background: #ffe1e1;
+.ingredient.lvl-high {
+  background: #fff1f0;
   color: #ee0a24;
   font-weight: 600;
+}
+.ingredient.lvl-medium {
+  background: #fff7e6;
+  color: #ed6a0c;
+  font-weight: 600;
+}
+.ingredient.lvl-low {
+  background: #f0fff4;
+  color: #07c160;
+}
+.ingredient.lvl-none {
+  background: #f2f3f5;
+  color: #646566;
+}
+.ing-popup {
+  padding: 20px 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.ing-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.ing-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #323233;
+}
+.ing-origin {
+  font-size: 12px;
+  color: #969799;
+  width: 100%;
+}
+.ing-level-badge {
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.ing-level-badge.lvl-high {
+  background: #fff1f0;
+  color: #ee0a24;
+}
+.ing-level-badge.lvl-medium {
+  background: #fff7e6;
+  color: #ed6a0c;
+}
+.ing-level-badge.lvl-low {
+  background: #f0fff4;
+  color: #07c160;
+}
+.ing-level-badge.lvl-none {
+  background: #f2f3f5;
+  color: #969799;
+}
+.ing-body {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 4px 12px;
+}
+.ing-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ebedf0;
+}
+.ing-row:last-child {
+  border-bottom: none;
+}
+.ing-k {
+  flex-shrink: 0;
+  width: 56px;
+  color: #969799;
+  font-size: 13px;
+}
+.ing-v {
+  color: #323233;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ing-empty {
+  padding: 12px;
+  color: #969799;
+  font-size: 13px;
+}
+.ing-reasons {
+  margin-top: 12px;
+}
+.reason {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.reason.lvl-high {
+  background: #fff1f0;
+  color: #ee0a24;
+}
+.reason.lvl-medium {
+  background: #fff7e6;
+  color: #ed6a0c;
 }
 .chart-wrap {
   padding: 12px;
