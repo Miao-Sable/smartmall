@@ -22,6 +22,13 @@ def find_product_by_barcode(barcode: str) -> dict | None:
     return None
 
 
+def find_product_by_id(product_id: int) -> dict | None:
+    for product in _load("products.json"):
+        if product.get("id") == product_id:
+            return product
+    return None
+
+
 def load_price_history(product_id: int) -> dict | None:
     for item in _load("price_history.json"):
         if item.get("product_id") == product_id:

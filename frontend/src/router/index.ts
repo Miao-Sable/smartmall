@@ -13,6 +13,7 @@ const router = createRouter({
     { path: '/profiles', name: 'profiles', component: () => import('@/pages/ProfilesPage.vue'), meta: { title: '家庭成员', requiresAuth: true } },
     { path: '/profiles/:id/edit', name: 'profile-edit', component: () => import('@/pages/ProfileEditPage.vue'), meta: { title: '编辑档案', requiresAuth: true } },
     { path: '/shopping-list', name: 'shopping-list', component: () => import('@/pages/ShoppingListPage.vue'), meta: { title: '购物清单预检', requiresAuth: true } },
+    { path: '/weekly-report', name: 'weekly-report', component: () => import('@/pages/WeeklyReportPage.vue'), meta: { title: '健康周报', requiresAuth: true } },
     { path: '/product/:barcode', name: 'product', component: () => import('@/pages/ProductDetailPage.vue'), meta: { title: '商品详情' } },
     { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { title: '登录' } },
     { path: '/register', name: 'register', component: () => import('@/pages/RegisterPage.vue'), meta: { title: '注册' } },
