@@ -418,6 +418,18 @@
     "crowd_hints": ["常见过敏原"]
   },
   {
+    "name": "鱼露",
+    "plain_name": "鱼露",
+    "category": "调味料",
+    "function": "提鲜、调味",
+    "aliases": ["鱼酱油"],
+    "e_numbers": [],
+    "risk_level": "low",
+    "risk": "海鲜发酵调味汁，含鱼类成分，海鲜/鱼类过敏人群需注意",
+    "crowd_hints": ["海鲜/鱼类过敏注意"],
+    "trace": true
+  },
+  {
     "name": "鱼",
     "plain_name": "鱼",
     "category": "海鲜",

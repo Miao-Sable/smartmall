@@ -18,6 +18,8 @@ export interface IngredientEntry {
   risk_level: RiskLevel
   risk: string
   crowd_hints: string[]
+  /** 添加剂/辅料，添加量极少（用于过敏命中的视觉降级提示） */
+  trace?: boolean
 }
 
 export interface IngredientExplanation {
@@ -25,6 +27,8 @@ export interface IngredientExplanation {
   entry: IngredientEntry | null
   level: RiskLevel | 'none'
   reasons: { label: string; level: RiskLevel }[]
+  /** 过敏命中的微量添加剂：视觉降级为橙色，但评分/过敏判定不变 */
+  trace?: boolean
 }
 
 interface RawDictItem {
@@ -88,9 +92,18 @@ export function explainIngredient(ingredient: string, profile: Profile | null): 
   // 级别 = 词典固有风险 与 个性化命中的最严重一档
   let risk: RiskLevel | null = entry?.risk_level ?? null
   for (const r of reasons) risk = worse(risk, r.level)
-  const level: RiskLevel | 'none' = risk ?? 'none'
+  let level: RiskLevel | 'none' = risk ?? 'none'
 
-  return { ingredient, entry, level, reasons }
+  // 微量添加剂（如鱼露）：本因过敏命中为高风险，但添加量极少，视觉降级为橙色；
+  // 评分与过敏判定不变，仅调整展示层级。
+  let trace = false
+  if (entry?.trace && level === 'high') {
+    level = 'medium'
+    trace = true
+    reasons.push({ label: `含添加剂 ${ingredient}（添加量极少，风险提示降级）`, level: 'medium' })
+  }
+
+  return { ingredient, entry, level, reasons, trace }
 }
 
 function worse(a: RiskLevel | null, b: RiskLevel | null): RiskLevel | null {
@@ -112,4 +125,9 @@ export function searchIngredients(query: string): IngredientEntry[] {
     else if (names.some((n) => norm(n).includes(q))) partial.push(entry)
   }
   return [...exact, ...partial].slice(0, 20)
+}
+
+/** 判断某成分是否为「添加剂·添加量极少」（词典中标记 trace）。用于购物清单等场景的过敏命中降级。 */
+export function isTraceAdditive(ingredient: string): boolean {
+  return lookupIngredient(ingredient)?.trace === true
 }

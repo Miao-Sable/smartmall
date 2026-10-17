@@ -10,6 +10,7 @@ import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
 import { explainIngredient, searchIngredients, type IngredientExplanation } from '@/utils/ingredientExplain'
 import { useUserStore } from '@/stores/user'
 import PriceTrendChart from '@/components/PriceTrendChart.vue'
+import RiskTooltip from '@/components/RiskTooltip.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -144,9 +145,17 @@ const searchResults = computed(() => (searchText.value.trim() ? searchIngredient
 const activeIngredient = ref<IngredientExplanation | null>(null)
 const showIngredient = ref(false)
 
-const ingredientItems = computed(() =>
-  (product.value?.ingredients ?? []).map((ing) => explainIngredient(ing, userStore.activeProfile)),
-)
+const ingredientItems = computed(() => {
+  const items = (product.value?.ingredients ?? []).map((ing) => explainIngredient(ing, userStore.activeProfile))
+  // 高风险在前，微量添加剂（橙色）排在高风险下方，其余保持原顺序
+  const rank = (lvl: string) => (lvl === 'high' ? 0 : lvl === 'medium' ? 1 : 2)
+  return [...items].sort((a, b) => rank(a.level) - rank(b.level))
+})
+
+// 微量添加剂悬停提示，如「含添加剂 鱼露（添加量极少）」
+function ingredientTip(it: IngredientExplanation): string {
+  return it.trace ? `含添加剂 ${it.ingredient}（添加量极少）` : ''
+}
 
 function openIngredient(name: string) {
   activeIngredient.value = explainIngredient(name, userStore.activeProfile)
@@ -251,7 +260,7 @@ function levelLabel(level: string) {
             :class="levelClass(it.level)"
             @click="openIngredient(it.ingredient)"
           >
-            {{ it.ingredient }}
+            <RiskTooltip :text="ingredientTip(it)" hover-only>{{ it.ingredient }}</RiskTooltip>
           </span>
         </div>
       </van-cell-group>

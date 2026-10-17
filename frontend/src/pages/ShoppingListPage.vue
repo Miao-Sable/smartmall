@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { showToast } from 'vant'
 import { precheckApi, rematchApi, type PrecheckItem, type ProductBrief } from '@/api/shopping-list'
 import { useUserStore } from '@/stores/user'
+import RiskTooltip from '@/components/RiskTooltip.vue'
+import { isTraceAdditive } from '@/utils/ingredientExplain'
 
 const userStore = useUserStore()
 
@@ -264,6 +266,23 @@ function reselectAlt(rowIndex: number) {
 
 function uniqueAllergens(item: PrecheckItem): string[] {
   return [...new Set(item.allergen_hits.map((h) => h.allergen_name))]
+}
+
+// 是否仅由「添加剂·添加量极少」触发过敏（视觉降级为橙色，风险判定与替代方案逻辑不变）
+function isTraceOnly(item: PrecheckItem): boolean {
+  return item.allergen_hits.length > 0 && item.allergen_hits.every((h) => isTraceAdditive(h.ingredient))
+}
+
+// 过敏标签颜色：仅微量添加剂命中 → 橙色（warning），否则红色（danger）
+function allergenTagType(item: PrecheckItem): 'danger' | 'warning' {
+  return isTraceOnly(item) ? 'warning' : 'danger'
+}
+
+// 微量添加剂过敏提示，如「含添加剂 鱼露（添加量极少）」
+function allergenTip(item: PrecheckItem): string {
+  if (!isTraceOnly(item)) return ''
+  const ings = [...new Set(item.allergen_hits.map((h) => h.ingredient))]
+  return `含添加剂 ${ings.join('、')}（添加量极少）`
 }
 
 // 原商品侧：红色关键词标签（仅过敏源），如「含牛奶」
@@ -536,7 +555,9 @@ function copySchemeNew(scheme: SavedScheme) {
               <span class="match-marks">
                 <van-button v-if="item.match_type === 'fuzzy'" size="mini" plain @click="onRematch(item)">不是这个？</van-button>
                 <template v-if="item.allergen_hits.length">
-                  <van-tag type="danger" plain>{{ suggestReason(item) }}</van-tag>
+                  <RiskTooltip :text="allergenTip(item)">
+                    <van-tag :type="allergenTagType(item)" plain>{{ suggestReason(item) }}</van-tag>
+                  </RiskTooltip>
                 </template>
                 <span v-else class="safe-mark">✅</span>
               </span>
@@ -612,7 +633,9 @@ function copySchemeNew(scheme: SavedScheme) {
               <div class="scheme-left">
                 <div class="p-name-row">
                   <span class="p-name">{{ row.item.product?.name }}</span>
-                  <van-tag v-if="originalTag(row.item)" type="danger">{{ originalTag(row.item) }}</van-tag>
+                  <RiskTooltip v-if="originalTag(row.item)" :text="allergenTip(row.item)">
+                    <van-tag :type="allergenTagType(row.item)">{{ originalTag(row.item) }}</van-tag>
+                  </RiskTooltip>
                 </div>
               </div>
               <div class="scheme-right">
