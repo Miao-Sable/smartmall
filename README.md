@@ -72,7 +72,7 @@
 | 后端 | FastAPI + SQLModel + Pydantic |
 | 数据库 | 开发 SQLite / 部署 PostgreSQL |
 | 认证 | JWT |
-| 部署 | 前端 Vercel / Netlify，后端 Render / Railway |
+| 部署 | Docker Compose 一键启动 / Nginx + Uvicorn 手动部署 |
 
 ---
 
@@ -95,6 +95,14 @@
 ---
 
 ## 快速开始
+
+### Docker 一键启动（推荐）
+
+```bash
+docker compose up -d --build   # 访问 http://localhost:8080
+```
+
+生产部署细节（密钥、HTTPS、PostgreSQL）见 [deploy/README.md](deploy/README.md)。
 
 ### 环境要求
 
@@ -203,9 +211,9 @@ smart-shopping/
 
 ### 商品数据规则
 
-- MVP 使用本地 mock JSON。
+- 内置 500 条 mock 商品（38 个品类），运行时从 mock JSON 读取。
 - 预留第三方 API 接口位置。
-- 查不到商品时提示“暂无数据”，引导手动输入。
+- 查不到商品时提示”暂无数据”，引导手动输入。
 
 ### 权限与隐私
 
