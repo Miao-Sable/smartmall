@@ -104,6 +104,11 @@ docker compose up -d --build   # 访问 http://localhost:8080
 
 生产部署细节（密钥、HTTPS、PostgreSQL）见 [deploy/README.md](deploy/README.md)。
 
+### 安装到设备（PWA / APK）
+
+- **PWA**（推荐演示）：构建并部署到 HTTPS 后，手机浏览器打开 →「添加到主屏幕」，即可全屏、离线、像 App 一样使用。
+- **安卓 APK**：用 Capacitor 打包成 `.apk` 直接安装，步骤见 [deploy/APK.md](deploy/APK.md)。
+
 ### 环境要求
 
 - Node.js >= 18
