@@ -1,0 +1,49 @@
+# SmartMall 一条命令启动：前端(Nginx) + 后端(FastAPI) + 数据库(PostgreSQL)
+# 用法：docker compose up -d --build
+# 访问：http://localhost:8080 （API 文档 http://localhost:8080/docs）
+# 生产前：在项目根目录建 .env 写入 SECRET_KEY=强随机值（compose 会自动读取）
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: smartmall
+      POSTGRES_PASSWORD: smartmall
+      POSTGRES_DB: smartmall
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartmall -d smartmall"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      # 强随机值，建议通过根目录 .env 的 SECRET_KEY 注入
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      DEBUG: "false"
+      DATABASE_URL: postgresql://smartmall:smartmall@db:5432/smartmall
+      # 同源反代下 CORS 实际不触发，仅作兜底；多域名时写成 JSON 数组
+      CORS_ORIGINS: '["http://localhost:8080"]'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

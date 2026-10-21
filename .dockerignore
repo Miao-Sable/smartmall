@@ -1,0 +1,28 @@
+.git
+.gitignore
+.vscode
+.idea
+
+# Python 运行产物与本地环境（避免把 Windows venv 打进去）
+**/__pycache__
+**/*.pyc
+**/*.pyo
+backend/venv
+backend/.venv
+backend/.env
+
+# 本地数据库
+*.db
+smartmall.db
+
+# 前端依赖与构建产物（镜像内重新安装/构建）
+frontend/node_modules
+frontend/dist
+frontend/.env
+frontend/.env.development
+frontend/.env.production
+frontend/.env.local
+
+# 非运行时文件
+deploy/
+*.md
