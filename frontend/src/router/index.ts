@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     { path: '/', name: 'home', component: () => import('@/pages/HomePage.vue'), meta: { title: '首页', tabbar: true } },
     { path: '/scan', name: 'scan', component: () => import('@/pages/ScanPage.vue'), meta: { title: '扫码', tabbar: true, requiresAuth: true } },

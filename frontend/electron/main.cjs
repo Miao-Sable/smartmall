@@ -1,5 +1,4 @@
 // 智慧购物 Windows 桌面壳（Electron 主进程）
-// 加载构建好的前端 dist，直连本机后端 http://localhost:8000
 const { app, BrowserWindow, session } = require('electron')
 const path = require('path')
 
@@ -15,15 +14,14 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       // 关闭同源策略：允许 file:// 页面请求 http://localhost:8000 后端
-      // （本地演示应用，加载的是自己构建的 dist，风险可控）
       webSecurity: false,
     },
   })
 
-  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+  // 移除顶部 File/Edit/View/Window 菜单栏
+  win.removeMenu()
 
-  // 调试时可打开 DevTools
-  // win.webContents.openDevTools()
+  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
 }
 
 app.whenReady().then(() => {

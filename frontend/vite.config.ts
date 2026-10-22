@@ -5,7 +5,9 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // 桌面壳（Electron file:// 加载）用相对路径，避免 /assets 绝对路径在 file:// 下 404 白屏
+  base: mode === 'desktop' ? './' : '/',
   plugins: [
     vue(),
     VitePWA({
@@ -50,4 +52,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
