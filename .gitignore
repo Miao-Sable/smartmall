@@ -25,3 +25,7 @@ Thumbs.db
 electron-dist/
 release/
 dev-dist/
+
+# PyInstaller 打包产物
+build/
+*.spec

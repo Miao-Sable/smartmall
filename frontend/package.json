@@ -11,7 +11,9 @@
     "cap:add:android": "cap add android",
     "cap:sync": "cap sync android",
     "cap:build:apk": "npm run build && cap sync android && cd android && gradlew assembleDebug",
-    "electron:build": "vue-tsc --noEmit && vite build --mode desktop && electron-builder --win portable"
+    "build:backend": "cd ../backend && venv/Scripts/python.exe -m PyInstaller --noconfirm --clean --onefile --name backend --add-data \"../mock;mock\" --collect-all uvicorn --collect-all pydantic --collect-all sqlmodel --collect-all bcrypt --collect-all fastapi --collect-all starlette run_server.py",
+    "electron:build": "vue-tsc --noEmit && vite build --mode desktop && electron-builder --win portable",
+    "electron:build:all": "npm run build:backend && npm run electron:build"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
@@ -47,6 +49,9 @@
       "electron/**/*",
       "!node_modules/**/*",
       "!**/*.map"
+    ],
+    "extraResources": [
+      { "from": "../backend/dist/backend.exe", "to": "backend/backend.exe" }
     ],
     "win": {
       "target": [{ "target": "portable", "arch": ["x64"] }],
