@@ -10,6 +10,8 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
+      // 开发模式也启用 PWA，便于在电脑/手机浏览器直接「安装为应用」
+      devOptions: { enabled: true, type: 'module' },
       includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
         name: '智慧购物',

@@ -3,13 +3,15 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "cap:add:android": "cap add android",
     "cap:sync": "cap sync android",
-    "cap:build:apk": "npm run build && cap sync android && cd android && gradlew assembleDebug"
+    "cap:build:apk": "npm run build && cap sync android && cd android && gradlew assembleDebug",
+    "electron:build": "vue-tsc --noEmit && vite build --mode desktop && electron-builder --win portable"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
@@ -26,9 +28,29 @@
     "@capacitor/cli": "^8.5.3",
     "@types/node": "^20.12.0",
     "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
     "typescript": "~5.4.5",
     "vite": "^5.2.11",
     "vite-plugin-pwa": "^0.20.5",
     "vue-tsc": "^2.0.19"
+  },
+  "build": {
+    "appId": "com.smartmall.desktop",
+    "productName": "智慧购物",
+    "electronDist": "electron-dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "!node_modules/**/*",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "icon": "electron/icon.ico"
+    }
   }
 }

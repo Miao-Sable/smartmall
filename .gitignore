@@ -20,3 +20,8 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Electron 桌面壳构建产物
+electron-dist/
+release/
+dev-dist/
