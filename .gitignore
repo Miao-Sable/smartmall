@@ -29,3 +29,6 @@ dev-dist/
 # PyInstaller 打包产物
 build/
 *.spec
+
+# Claude Code 临时目录（CLAUDE_CODE_TMPDIR 指向这里）
+.claude-tmp/

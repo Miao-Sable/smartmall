@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { createScanApi } from '@/api/scan'
 import { useUserStore } from '@/stores/user'
 import { analyzeLocal, isNetworkError, isOffline } from '@/utils/offline'
@@ -40,10 +40,26 @@ async function startScan() {
   scanning.value = true
   await nextTick()
   try {
-    scanner = new Html5Qrcode('qr-reader')
+    scanner = new Html5Qrcode('qr-reader', {
+      // 限定支持的码制：优先 1D 条形码（EAN/UPC/Code128 等），兼顾二维码
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODE_93,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.QR_CODE,
+      ],
+      verbose: false,
+    })
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 220, height: 220 } },
+      // 1D 条形码是横向长条，取景框用宽矩形而非正方形，识别率更高
+      { fps: 10, qrbox: { width: 260, height: 110 } },
       (text) => void handleDecode(text),
       () => {
         // 逐帧识别失败的回调，静默处理
